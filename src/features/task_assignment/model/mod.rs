@@ -1,3 +1,3 @@
-mod department;
-mod tasks;
-mod worker;
+pub mod department;
+pub mod tasks;
+pub mod worker;

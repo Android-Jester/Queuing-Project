@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 tokio = { version = "^1", features = ["full"] }
 serde = { version = "1.0.152", features =  ["derive"] }
-actix-web = "^4"
+actix-web = { version = "4.3.1", features = ["openssl", "default"] }
 chrono = { version = "0.4.23", features = ["std", "clock", "serde"] }
 mysql = "23.0.1"
+genpdf = "0.2.0"
+image = "0.24.5"

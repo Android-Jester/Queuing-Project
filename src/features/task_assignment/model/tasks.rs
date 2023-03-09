@@ -2,7 +2,7 @@ use chrono::{serde::ts_seconds_option, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub enum Status {
+pub enum TaskStatus {
     Completed,
     Incomplete,
     Pending,
@@ -17,7 +17,7 @@ pub struct Tasks {
     pub created_date: Option<DateTime<Utc>>,
     #[serde(with = "ts_seconds_option")]
     pub completed_date: Option<DateTime<Utc>>,
-    pub task_status: Status,
+    pub task_status: TaskStatus,
     pub task_details: String,
     pub task_report: String,
 }
