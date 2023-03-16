@@ -1764,6 +1764,7 @@ dependencies = [
  "image",
  "mysql",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

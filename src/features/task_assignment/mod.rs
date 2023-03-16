@@ -1,3 +1,3 @@
 mod controller;
-mod interface;
+pub mod interface;
 mod model;
