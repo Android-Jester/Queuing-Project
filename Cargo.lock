@@ -1762,6 +1762,7 @@ dependencies = [
  "chrono",
  "genpdf",
  "image",
+ "log",
  "mysql",
  "serde",
  "serde_json",

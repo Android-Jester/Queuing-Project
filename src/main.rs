@@ -1,6 +1,6 @@
 mod core;
 mod features;
-
+use crate::features::task_assignment::interface;
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -10,8 +10,12 @@ async fn hello() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(move || App::new().service(hello))
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+    HttpServer::new(move || {
+        App::new()
+            .configure(interface::task_interface_config)
+            .service(hello)
+    })
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
