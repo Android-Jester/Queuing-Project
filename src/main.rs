@@ -1,16 +1,25 @@
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use log::info;
+
+use crate::features::task_assignment::interface;
+use simple_logger;
 mod core;
 mod features;
-use crate::features::task_assignment::interface;
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+
 #[get("/")]
 async fn hello() -> impl Responder {
-    // HttpResponse::Ok().body(String::from("Hello World"))
+    info!("Hello There sorry for the trouble");
+
     HttpResponse::Accepted().body(String::from("Wrong way buddy"))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    simple_logger::init_with_level(log::Level::Info).unwrap();
+    info!("Server Starting . . . . .");
+
     HttpServer::new(move || {
+        info!("Server Service Beginning . . . . .");
         App::new()
             .configure(interface::task_interface_config)
             .service(hello)

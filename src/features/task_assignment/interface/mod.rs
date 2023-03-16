@@ -1,4 +1,5 @@
 use actix_web::{guard, web, HttpResponse, Responder};
+use log::info;
 
 use crate::features::task_assignment::controller::{remove_task, task_creation, update_task};
 use crate::features::task_assignment::model::Tasks;
@@ -22,6 +23,7 @@ pub fn task_interface_config(conf: &mut web::ServiceConfig) {
 }
 
 async fn create_task(data: web::Json<Tasks>) -> impl Responder {
+    info!("create called");
     match task_creation(data.into_inner()) {
         Ok(_) => HttpResponse::Ok().body("Task Created Successfully"),
         Err(failed) => HttpResponse::BadRequest()
@@ -38,6 +40,7 @@ async fn modify_task(data: web::Json<Tasks>) -> impl Responder {
 }
 
 async fn delete_task(id: web::Json<i32>) -> impl Responder {
+    info!("delete called");
     match remove_task(id.into_inner()) {
         Ok(_) => HttpResponse::Ok().body("Task modified Successfully"),
         Err(failed) => HttpResponse::BadRequest()
@@ -46,17 +49,22 @@ async fn delete_task(id: web::Json<i32>) -> impl Responder {
 }
 
 async fn get_all() -> impl Responder {
+    info!("Get_all called");
     HttpResponse::Ok().body("Empty")
 }
 
 async fn get_completed() -> impl Responder {
+    info!("Get_completed called");
+    
     HttpResponse::Ok().body("Empty")
 }
 
 async fn get_incomplete() -> impl Responder {
+    info!("Get_incomplete called");
     HttpResponse::Ok().body("Empty")
 }
 
 async fn get_owned() -> impl Responder {
+    info!("Get_owned called");
     HttpResponse::Ok().body("Empty")
 }

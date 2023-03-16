@@ -14,4 +14,5 @@ chrono = { version = "0.4.23", features = ["std", "clock", "serde"] }
 mysql = "23.0.1"
 genpdf = "0.2.0"
 image = "0.24.5"
-log = { version = "0.4.17", features = ["std"] }
+log = { version = "0.4.17" }
+simple_logger = "4.0.0"
