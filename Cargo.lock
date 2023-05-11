@@ -298,6 +298,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "bank-queue-project"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "genpdf",
+ "image",
+ "log",
+ "mysql",
+ "serde",
+ "serde_json",
+ "simple_logger",
+ "tokio",
+]
+
+[[package]]
 name = "base-x"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1792,22 +1808,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "office_organizer"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "chrono",
- "genpdf",
- "image",
- "log",
- "mysql",
- "serde",
- "serde_json",
- "simple_logger",
- "tokio",
 ]
 
 [[package]]
