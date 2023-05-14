@@ -1,7 +1,5 @@
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use log::info;
-
-use crate::features::task_assignment::interface;
 use simple_logger;
 mod features;
 
@@ -20,7 +18,6 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         info!("Server Service Beginning . . . . .");
         App::new()
-            .configure(interface::task_interface_config)
             .service(hello)
     })
     .bind(("0.0.0.0", 8080))?
