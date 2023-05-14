@@ -16,3 +16,5 @@ genpdf = "0.2.0"
 image = "0.24.5"
 log = { version = "0.4.17" }
 simple_logger = "4.0.0"
+randomforest = "0.1.6"
+csv = "1.2.1"

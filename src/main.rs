@@ -3,7 +3,6 @@ use log::info;
 
 use crate::features::task_assignment::interface;
 use simple_logger;
-mod core;
 mod features;
 
 #[get("/")]
