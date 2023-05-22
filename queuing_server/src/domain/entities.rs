@@ -1,5 +1,5 @@
 
-enum Action {
+pub enum Action {
     /// This action determines the amount to be deposited
     /// from the account and the time it took for the person to withdraw from the account
     Deposit {
@@ -29,8 +29,8 @@ enum Action {
 }
 
 pub struct Teller {
-    teller_id: String,
-    current_action: Action,
+    pub teller_id: String,
+    pub current_action: Action,
 }
 
 pub struct Customer {
