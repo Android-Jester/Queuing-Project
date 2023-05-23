@@ -7,7 +7,9 @@ pub trait QueuingRepository {
     fn train_model<R>(data: Reader<R>) -> std::io::Result<String>;
     // fn obtain_predictions() -> [f64];
     fn get_best_queue() -> String;
+    /// Assigns a SessionID once enabled into the system
     fn signup(&self) -> String;
+    // TODO: Get SessionID and keep it
     fn login(&self) -> String;
 
 }

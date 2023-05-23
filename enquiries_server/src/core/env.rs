@@ -1,0 +1,1 @@
+pub const OPENAI_KEY: &'static str = env!("OPENAI_API_KEY");
