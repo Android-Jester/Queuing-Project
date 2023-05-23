@@ -1,48 +1,43 @@
 use std::char::MAX;
+use std::fmt::format;
 use std::num::{NonZeroIsize, NonZeroUsize};
 
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};
 use randomforest::criterion::{Mse, Gini};
-use randomforest::table::{Table, TableBuilder};
-use crate::domain::entities::{Teller, Action};
-impl Teller {
-    fn new(teller_id: String, action: Action, average_time: usize, best_time: usize) -> Self {
-        Self {
-            teller_id,
-            current_action: action
-        }
-    }
-    fn calc_service_time(&self) -> f64 {
-            let service_time = match teller.current_action {
-                Action::Deposit { amount, duration } => duration,
-                Action::Withdrawal { amount, duration } => duration,
-                Action::ForeignExchange {
-                    amount, initial_currency, new_currency, duration
-                } => duration,
-                Action::Payment { amount, duration, service  } => duration
-            };
-        service_time.into()
-        }
-    }
+use randomforest::table::{Table, TableBuilder, TableError};
+use crate::domain::entities::{Teller, Action, Customer};
 
-fn tellers_table(tellers: Vec<f64>) {
-    let mut table_builder = TableBuilder::new();
-    for teller in tellers {
-        // table_builder.add_row(teller.into(), ).expect("No Data");
-    }
+fn train_model(model :&mut RandomForestClassifierOptions, service_time_table: Table) -> RandomForestClassifier {
+    model.fit(Gini, service_time_table)
 }
 
-
-fn best_line(tellers: Table, features: &[f64], action: String) -> f64 {
-    const MAX_FEATURES: NonZeroUsize = NonZeroUsize::new(12).ok_or(0).unwrap();
-    const MAX_SAMPLES: NonZeroUsize = NonZeroUsize::new(12).ok_or(0).unwrap();
-    let mut random_class: RandomForestClassifier = RandomForestClassifierOptions::new()
+fn start_model<'a>( max_features :NonZeroUsize, max_samples: NonZeroUsize) -> &'a mut RandomForestClassifierOptions {
+    RandomForestClassifierOptions::new()
         .seed(10)
-        .max_features(MAX_FEATURES)
-        .max_samples(MAX_SAMPLES)
-        .fit(Gini, tellers);
-    let pred = random_class.predict(features);
-    pred
+        .max_features(max_features)
+        .max_samples(max_samples)
 }
 
-fn change_teller() {}
+fn classify_data(service_time_table_builder: &mut TableBuilder, service_time_features: Vec<f64>, service_time_target: f64) -> std::io::Result<()> {
+    if let Ok(data ) = service_time_table_builder.add_row(service_time_features.into(), service_time_target) {
+        Ok(())
+    } else {
+        match TableError {
+            //TODO: Handling Errors on Data acquired from database
+            TableError::EmptyTable => {},
+            TableError::NonFiniteTarget => {},
+            TableError::ColumnSizeMismatch => {}
+        }
+    }
+}
+
+fn predict() {
+    // TODO: Obtain Data from database
+    // TODO: Classify Data into target and features
+    // classify_data()
+    // TODO: Train Model
+    // train_model()
+    // TODO: Predict Result
+}
+
+
