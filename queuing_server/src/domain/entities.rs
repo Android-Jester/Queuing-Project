@@ -1,5 +1,6 @@
 use actix_web::http::header::q;
-
+use diesel::Queryable;
+#[derive(Queryable)]
 pub enum Action {
     /// This action determines the amount to be deposited
     /// from the account and the time it took for the person to withdraw from the account
@@ -28,7 +29,7 @@ pub enum Action {
         service_time: usize
     }
 }
-
+#[derive(Queryable)]
 pub struct Teller {
     teller_id: String,
     current_action: Action,
@@ -44,7 +45,7 @@ impl Teller {
 }
 
 
-
+#[derive(Queryable)]
 pub struct Customer {
     account_number: String,
     waiting_time: usize,
@@ -69,4 +70,5 @@ impl Customer {
         self.waiting_time = waiting_time;
         self
     }
+
 }
