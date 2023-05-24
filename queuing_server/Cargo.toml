@@ -18,3 +18,4 @@ simple_logger = "4.0.0"
 randomforest = "0.1.6"
 csv = "1.2.1"
 diesel = {version = "2.0.4", features = ["mysql", "mysql_backend"]}
+dotenvy = "0.15"
