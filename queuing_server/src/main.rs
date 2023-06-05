@@ -1,15 +1,24 @@
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, post, web::Json, Responder};
 
-mod core;
-mod data_sources;
-mod domain;
-mod presentation;
-pub mod models;
+fn main() {
+    println!("Hello");
+}
 
 
-use presentation::start_server;
+#[actix_web::main]
+async fn start_server() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            /*Service for getting the result from the randomforest*/
+            .service(best_line_service)
+    })
+        .bind(("0.0.0.0", 8080))?
+        .run()
+        .await
 
-#[tokio::main]
-async fn main() -> std::io::Result<()> {
-    start_server().unwrap();
-    Ok(())
+}
+
+#[post("/")]
+async fn best_line_service() -> impl Responder {
+    HttpResponse::Ok().body("Hello")
 }

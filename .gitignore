@@ -2,3 +2,4 @@ queuing_server/target
 enquiries_server/target
 queuing_server/Cargo.lock
 enquiries_server/Cargo.lock
+queuing_server_old

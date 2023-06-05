@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
-    <file url="file://$PROJECT_DIR$/migrations/2023-05-24-153730_queue_analysis/up.sql" dialect="MariaDB" />
+    <file url="file://$PROJECT_DIR$/migrations/2023-06-03-143129_create_users/down.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/migrations/2023-06-03-143129_create_users/up.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/migrations/2023-06-03-143142_service_times/down.sql" dialect="MariaDB" />
+    <file url="file://$PROJECT_DIR$/migrations/2023-06-03-143142_service_times/up.sql" dialect="MySQL" />
+    <file url="PROJECT" dialect="MongoDB" />
   </component>
 </project>

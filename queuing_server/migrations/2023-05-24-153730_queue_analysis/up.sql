@@ -1,2 +1,0 @@
-CREATE DATABASE Queue
-0
