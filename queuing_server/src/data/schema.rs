@@ -1,36 +1,29 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    Transaction (transaction) {
+    transaction (id) {
+        id -> Integer,
         #[max_length = 255]
-        transaction -> Varchar,
+        transaction_detail -> Nullable<Varchar>,
         #[max_length = 255]
-        server -> Nullable<Varchar>,
+        server_id -> Nullable<Varchar>,
+        #[max_length = 255]
+        user_account_number -> Nullable<Varchar>,
+        duration -> Nullable<Float>,
+        transaction_time -> Nullable<Timestamp>,
     }
 }
 
 diesel::table! {
-    Users (account_number) {
+    users (account_number) {
         #[max_length = 255]
         account_number -> Varchar,
-        #[max_length = 255]
-        transaction -> Nullable<Varchar>,
-        service_time -> Float,
     }
 }
 
-diesel::table! {
-    teller (teller_id) {
-        #[max_length = 255]
-        teller_id -> Varchar,
-        #[max_length = 255]
-        transaction -> Nullable<Varchar>,
-        service_time -> Nullable<Float>,
-    }
-}
+diesel::joinable!(transaction -> users (user_account_number));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    Transaction,
-    Users,
-    teller,
+    transaction,
+    users,
 );

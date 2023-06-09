@@ -56,3 +56,5 @@ pub fn login_user(
     // let data = db_data.expect("Unable to search users");
     // data
 }
+
+pub fn get_guest_session(guest: Guest) {}

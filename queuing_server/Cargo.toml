@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 actix-web = {version = "4.3.1"}
 dotenvy = "0.15.7"
-diesel = {version = "2.1.0", features = ["mysql", "mysql_backend"]}
+diesel = {version = "2.1.0", features = ["mysql", "mysql_backend", "chrono"]}
 randomforest = "0.1.6"
 serde = {version = "1.0.163", features = ["derive"]}
+chrono = "0.4.26"

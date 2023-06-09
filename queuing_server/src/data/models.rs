@@ -1,7 +1,9 @@
-use diesel::{Insertable, Queryable, Selectable};
-use serde::{Deserialize, Serialize};
 
-pub enum Transactions {
+use chrono::NaiveDateTime;
+use diesel::{Insertable, Queryable, Selectable};
+
+
+pub enum TransactionsType {
     Deposit {
         service_time: f32
     },
@@ -17,64 +19,61 @@ pub enum Transactions {
 }
 
 
-#[derive(Insertable, Selectable, Queryable)]
-#[diesel(table_name = crate::data::schema::Users)]
+#[derive(Selectable, Queryable, Insertable)]
+#[diesel(table_name = crate::data::schema::transaction)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
-pub struct User {
-    account_number: String,
-    transaction: Option<String>,
-    service_time: f32
+pub struct Transaction {
+    pub transaction_detail: Option<String>,
+    pub user_account_number: Option<String>,
+    pub server_id: Option<String>,
+    pub duration: Option<f32>,
+    pub transaction_time: Option<NaiveDateTime>,
 }
 
-impl User {
-    fn new(account_number: String, transaction: Transactions) -> User {
+// #[derive(Selectable, Queryable, Insertable)]
+// #[diesel(table_name = crate::data::schema::users)]
+// #[diesel(check_for_backend(diesel::mysql::Mysql))]
+// pub struct User {
+//     account_number: String
+// }
+
+impl Transaction {
+    fn new(
+        account_number: String,
+        user_account_number: Option<String>,
+        transaction: TransactionsType,
+        server_identification: Option<String>,
+        transaction_time: Option<NaiveDateTime>
+        ) -> Transaction {
         let (action, duration) = select_transaction(transaction);
-        User {
-            account_number,
-            transaction: Some(action),
-            service_time: duration
+        Transaction {
+            transaction_detail: Some(action),
+            user_account_number,
+            server_id: server_identification,
+            duration: Some(duration),
+            transaction_time
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Queryable, Insertable)]
-#[diesel(table_name = crate::data::schema::teller)]
-#[diesel(check_for_backend(diesel::mysql::Mysql))]
-pub struct Teller {
-    pub teller_id: String,
-    pub transaction: String,
-    pub service_time: f32
-}
-
-fn select_transaction(transaction: Transactions) -> (String, f32) {
+fn select_transaction(transaction: TransactionsType) -> (String, f32) {
 
     match transaction {
-        Transactions::Deposit { service_time } => {
+        TransactionsType::Deposit { service_time } => {
             (format!("deposit"), service_time)
         },
-        Transactions::Withdrawal { service_time } => {
+        TransactionsType::Withdrawal { service_time } => {
             (format!("withdrawal"), service_time)
 
         },
-        Transactions::ForeignExchange { service_time } => {
+        TransactionsType::ForeignExchange { service_time } => {
             (format!("foreign_exchange"), service_time)
         },
-        Transactions::BillPayment { service_time } => {
+        TransactionsType::BillPayment { service_time } => {
             (format!("payment"), service_time)
         },
     }
 }
 
-
-impl Teller {
-    fn new(id: String, action: Transactions) -> Teller {
-        let (transaction, duration) = select_transaction(action);
-        Teller {
-            teller_id: id,
-            transaction,
-            service_time: duration.into()
-        }
-    }
-}
 
 
