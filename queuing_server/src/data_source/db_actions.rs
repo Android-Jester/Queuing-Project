@@ -3,6 +3,7 @@ use crate::data::schema::transaction::dsl::*;
 use crate::data::{models::Transaction, schema::transaction};
 use diesel::prelude::*;
 use diesel::{Connection, MysqlConnection};
+use diesel::result::Error;
 use dotenvy::dotenv;
 
 pub fn establish_conn() -> MysqlConnection {
@@ -11,16 +12,15 @@ pub fn establish_conn() -> MysqlConnection {
     MysqlConnection::establish(&database_url).expect("Unable to connect to DB")
 }
 
-fn add_transaction(conn: &mut MysqlConnection, customer: Transaction) -> bool {
+pub fn add_transaction(transaction_data: Transaction) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
     let insert_transaction = conn.transaction(|conn| {
         diesel::insert_into(transaction::table)
-            .values(customer)
+            .values(transaction_data)
             .execute(conn)
     });
-    match insert_transaction {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    insert_transaction
+   
 }
 pub fn get_all_service_times() -> Vec<(Vec<f64>, f64)> {
     let conn = &mut establish_conn();

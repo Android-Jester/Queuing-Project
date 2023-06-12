@@ -1,7 +1,7 @@
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use diesel::{Insertable, Queryable, Selectable};
-
+use serde::{Deserialize, Deserializer, Serialize};
 
 pub enum TransactionsType {
     Deposit {
@@ -19,33 +19,40 @@ pub enum TransactionsType {
 }
 
 
-#[derive(Selectable, Queryable, Insertable)]
+
+#[derive(Selectable, Queryable, Insertable, Deserialize)]
 #[diesel(table_name = crate::data::schema::transaction)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct Transaction {
-    pub transaction_detail: Option<String>,
-    pub user_account_number: Option<String>,
-    pub server_id: Option<String>,
-    pub duration: Option<f32>,
-    pub transaction_time: Option<NaiveDateTime>,
+    pub transaction_detail: String,
+    pub server_id: String,
+    pub user_account_number: String,
+    pub duration: f32,
+    pub transaction_time: NaiveDateTime,
 }
 
 
+#[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
+#[diesel(table_name = crate::data::schema::users)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct User {
+    account_number: String,
+}
 
 impl Transaction {
     fn new(
         account_number: String,
-        user_account_number: Option<String>,
+        user_account_number: String,
         transaction: TransactionsType,
-        server_identification: Option<String>,
-        transaction_time: Option<NaiveDateTime>
+        server_identification: String,
+        transaction_time: NaiveDateTime
         ) -> Transaction {
         let (action, duration) = select_transaction(transaction);
         Transaction {
-            transaction_detail: Some(action),
+            transaction_detail: action,
             user_account_number,
             server_id: server_identification,
-            duration: Some(duration),
+            duration,
             transaction_time
         }
     }
