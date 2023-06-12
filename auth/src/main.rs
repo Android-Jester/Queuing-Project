@@ -10,10 +10,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(
         || App::new().service(login).service(starter), // .service(signup)
     )
-    .bind(("127.0.0.1", 8080))
-    .unwrap()
+    .bind(("127.0.0.1", 8080))?
     .run()
-    .workers(10)
     .await
 }
 

@@ -1,10 +1,10 @@
 CREATE TABLE users (
    account_number VARCHAR(255) PRIMARY KEY,
    password TEXT NOT NULL
-)-- Your SQL goes here
+);
 
-CREATE TABLE guest(
-   name TEXT,
+CREATE TABLE guests(
+   name VARCHAR(255),
    action VARCHAR(255),
    national_id VARCHAR(255) PRIMARY KEY
 )

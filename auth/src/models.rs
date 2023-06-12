@@ -10,6 +10,10 @@ pub struct User {
 }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Debug)]
-#[diesel(table_name = crate::schema::guest)]
+#[diesel(table_name = crate::schema::guests)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
-pub struct Guest {}
+pub struct Guest {
+    pub name: Option<String>,
+    pub action: Option<String>,
+    pub national_id: String
+}

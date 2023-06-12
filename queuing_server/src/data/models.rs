@@ -30,12 +30,7 @@ pub struct Transaction {
     pub transaction_time: Option<NaiveDateTime>,
 }
 
-// #[derive(Selectable, Queryable, Insertable)]
-// #[diesel(table_name = crate::data::schema::users)]
-// #[diesel(check_for_backend(diesel::mysql::Mysql))]
-// pub struct User {
-//     account_number: String
-// }
+
 
 impl Transaction {
     fn new(

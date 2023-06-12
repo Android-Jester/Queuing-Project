@@ -1,4 +1,4 @@
-use crate::models::User;
+use crate::models::{Guest, User};
 use crate::schema::users;
 use diesel::prelude::*;
 use dotenvy::dotenv;
