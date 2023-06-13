@@ -6,11 +6,8 @@ CREATE TABLE teller(
    server_id VARCHAR(255) PRIMARY KEY,
    server_station INT NOT NULL,
    service_time FLOAT NOT NULL,
-   active BOOLEAN
+   active BOOLEAN NOT NULL
 );
-
-
-
 
 CREATE TABLE transaction (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
@@ -23,4 +20,3 @@ CREATE TABLE transaction (
     FOREIGN KEY (user_account_number) REFERENCES users(account_number),
     FOREIGN KEY (server_id) REFERENCES teller(server_id)
 );
-

@@ -1,17 +1,19 @@
-use std::env;
-use crate::data::schema::transaction::dsl::*;
+use crate::data::models::{Teller, User};
+use crate::data::schema::teller::active;
 use crate::data::{models::Transaction, schema::transaction};
 use diesel::prelude::*;
-use diesel::{Connection, MysqlConnection};
 use diesel::result::Error;
+use diesel::{Connection, MysqlConnection};
 use dotenvy::dotenv;
+use std::env;
+use crate::data::schema::teller::dsl::teller;
+use crate::data::schema::users::dsl::users;
 
-pub fn establish_conn() -> MysqlConnection {
+fn establish_conn() -> MysqlConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     MysqlConnection::establish(&database_url).expect("Unable to connect to DB")
 }
-
 pub fn add_transaction(transaction_data: Transaction) -> Result<usize, Error> {
     let conn = &mut establish_conn();
     let insert_transaction = conn.transaction(|conn| {
@@ -20,18 +22,33 @@ pub fn add_transaction(transaction_data: Transaction) -> Result<usize, Error> {
             .execute(conn)
     });
     insert_transaction
-   
 }
-pub fn get_all_service_times() -> Vec<(Vec<f64>, f64)> {
+pub fn find_user(user_id: String) -> Result<User, Error> {
     let conn = &mut establish_conn();
-    let mut data: Vec<f64> = Vec::new();
-    let transactions_data = conn
-        .transaction(|connection| {
-            let results = transaction
-                .select(Transaction::as_select())
-                .load(connection);
-            results
-        })
-        .expect("Unknown Values");
-    vec![(vec![0.0], 0.0)]
+    let transactions_data = conn.transaction(|connection| {
+        let results = users
+            .select(User::as_select())
+            .find(user_id)
+            .first(connection);
+        results
+    });
+    transactions_data
+}
+pub fn find_teller(teller_id: &String) -> Result<Teller, Error> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        teller
+            .select(Teller::as_select())
+            .find(teller_id)
+            .first(connection)
+    });
+    transactions_data
+}
+pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
+    conn.transaction(|connection| {
+        diesel::update(teller.find(teller_id))
+            .set(active.eq(true))
+            .execute(connection)
+    })
 }

@@ -17,7 +17,7 @@ diesel::table! {
         server_id -> Varchar,
         server_station -> Integer,
         service_time -> Float,
-        active -> Nullable<Bool>,
+        active -> Bool,
     }
 }
 

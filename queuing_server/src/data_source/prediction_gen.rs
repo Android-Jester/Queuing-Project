@@ -3,7 +3,6 @@ use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};
 use std::num::NonZeroUsize;
 
-use super::db_actions::get_all_service_times;
 
 ///Split data into test data and train data to verify the fact
 fn classify_data(
@@ -29,7 +28,7 @@ fn train_model(
     let features = NonZeroUsize::new(max_features).unwrap();
     let samples = NonZeroUsize::new(max_samples).unwrap();
     let mut binding = RandomForestClassifierOptions::new();
-    let mut random_forest_option_data = binding
+    let random_forest_option_data = binding
         .seed(trees)
         .max_features(features)
         .max_samples(samples);
@@ -54,14 +53,14 @@ fn test_model_prediction(
     prediction
 }
 
-/// predict best line
-pub fn prediction() {
-    //     // TODO: Obtain Data from database
-    let transaction_data = get_all_service_times();
-    //     // TODO: Classify Data into target and features
-    let (train, test) = classify_data(&transaction_data, 80);
-    //     // TODO: Train Model
-    let mut classifier = train_model(100, 10, 20, train);
-    // let acc_pred = test_model_prediction(&mut classifier, test);
-    //     // TODO: Predict Result
-}
+// /// predict best line
+// pub fn prediction() {
+//     //     // TODO: Obtain Data from database
+//
+//     //     // TODO: Classify Data into target and features
+//     let (train, test) = classify_data(&transaction_data, 80);
+//     //     // TODO: Train Model
+//     let mut classifier = train_model(100, 10, 20, train);
+//     // let acc_pred = test_model_prediction(&mut classifier, test);
+//     //     // TODO: Predict Result
+// }
