@@ -22,22 +22,24 @@ pub struct Transaction {
     pub transaction_time: NaiveDateTime,
 }
 
-#[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
+#[derive(Selectable, Queryable, Insertable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = crate::data::schema::users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct User {
     pub account_number: String,
+    pub national_id: String,
 }
 
 impl Transaction {
-    fn new(
-        account_number: String,
+
+    pub fn new(
         user_account_number: String,
         transaction: TransactionsType,
         server_identification: String,
         transaction_time: NaiveDateTime,
     ) -> Transaction {
-        let (action, duration) = select_transaction(transaction);
+
+        let (action, duration) = select_transaction_type(transaction);
         Transaction {
             transaction_detail: action,
             user_account_number,
@@ -46,9 +48,10 @@ impl Transaction {
             transaction_time,
         }
     }
-}
 
-fn select_transaction(transaction: TransactionsType) -> (String, f32) {
+
+}
+fn select_transaction_type(transaction: TransactionsType) -> (String, f32) {
     match transaction {
         TransactionsType::Deposit { service_time } => (format!("deposit"), service_time),
         TransactionsType::Withdrawal { service_time } => (format!("withdrawal"), service_time),
@@ -58,6 +61,7 @@ fn select_transaction(transaction: TransactionsType) -> (String, f32) {
         TransactionsType::BillPayment { service_time } => (format!("payment"), service_time),
     }
 }
+
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = crate::data::schema::teller)]

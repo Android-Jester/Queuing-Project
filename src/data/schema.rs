@@ -10,16 +10,3 @@ diesel::table! {
         national_id -> Varchar,
     }
 }
-
-diesel::table! {
-    users (account_number) {
-        #[max_length = 255]
-        account_number -> Varchar,
-        password -> Text,
-    }
-}
-
-diesel::allow_tables_to_appear_in_same_query!(
-    guests,
-    users,
-);

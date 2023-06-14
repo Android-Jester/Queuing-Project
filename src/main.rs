@@ -4,8 +4,8 @@ use queuing_server::*;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| App::new()
-        .service(hello)
         .service(user_leave_queue)
+        .service(user_join_queue)
         .service(record_transaction)
         .service(show_user_waiting_time)
         .service(teller_list)
@@ -18,7 +18,4 @@ async fn main() -> std::io::Result<()> {
         .await
 }
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello")
-}
+

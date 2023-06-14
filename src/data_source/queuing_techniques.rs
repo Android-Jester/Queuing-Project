@@ -1,5 +1,6 @@
-use crate::data::schema::teller::service_time;
 use std::f64::consts::E;
+use queues::{IsQueue, Queue};
+use crate::data::models::User;
 
 ///Calculate best of service_times
 pub fn calc_best_avg(avg_times: &[f64]) -> u8 {
@@ -71,5 +72,16 @@ pub fn average_customer_waiting_time_queue(
     top / div
 }
 
-pub fn get_waiting_time(user_id: String) {}
-pub fn customer_list(teller_id: String, ) {}
+pub fn add_user_queue(user: User, queue: &mut Queue<User>) -> Result<&mut Queue<User>, &str> {
+    match queue.add(user) {
+        Ok(_) => Ok(queue),
+        Err(_) => Err("Cannot Add user")
+    }
+}
+
+pub fn remove_user_queue(queue: &mut Queue<User>) -> Result<&mut Queue<User>, &str> {
+    match queue.remove() {
+        Ok(_) => Ok(queue),
+        Err(_) => Err("No user exists")
+    }
+}

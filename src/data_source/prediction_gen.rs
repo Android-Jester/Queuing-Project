@@ -56,7 +56,7 @@ fn test_model_prediction(
 // /// predict best line
 // pub fn prediction() {
 //     //     // TODO: Obtain Data from database
-//
+//      let transactions_data = get_all_service_times();
 //     //     // TODO: Classify Data into target and features
 //     let (train, test) = classify_data(&transaction_data, 80);
 //     //     // TODO: Train Model

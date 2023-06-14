@@ -1,6 +1,3 @@
-use auth::establish_connection;
-use auth::models::User;
-use auth::{login_user, signup_user};
 use diesel::prelude::*;
 #[test]
 fn test_db() {
