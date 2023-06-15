@@ -1,65 +1,63 @@
-use crate::data::models::{Teller, User};
-use crate::data::schema::teller::active;
-use crate::data::{models::Transaction, SERVER_COUNT};
+
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::{Connection, MysqlConnection};
 use dotenvy::dotenv;
 use std::env;
-use crate::data::schema::guests::national_id;
-use crate::data::schema::teller::dsl::teller;
-use crate::data::schema::transaction::dsl::transaction;
-use crate::data::schema::users::dsl::users;
+use crate::data::models;
+use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert};
+use crate::data::schema::{Transactions, Users, Tellers, Guests};
 
 fn establish_conn() -> MysqlConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     MysqlConnection::establish(&database_url).expect("Unable to connect to DB")
 }
+
+
+/*Adding Data*/
 pub fn add_transaction(transaction_data: Transaction) -> Result<usize, Error> {
     let conn = &mut establish_conn();
-    let insert_transaction = conn.transaction(|conn| {
-        diesel::insert_into(transaction)
+    conn.transaction(|conn| {
+        diesel::insert_into(Transactions::dsl::Transactions)
             .values(transaction_data)
             .execute(conn)
-    });
-    insert_transaction
-}
-pub fn find_user(user_id: String) -> Result<User, Error> {
-    let conn = &mut establish_conn();
-    let transactions_data = conn.transaction(|connection| {
-        let results = users
-            .select(User::as_select())
-            .find(user_id)
-            .first(connection);
-        results
-    });
-    transactions_data
-}
-pub fn find_teller(teller_id: &String) -> Result<Teller, Error> {
-    let conn = &mut establish_conn();
-    let transactions_data = conn.transaction(|connection| {
-        teller
-            .select(Teller::as_select())
-            .find(teller_id)
-            .first(connection)
-    });
-    transactions_data
-}
-pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, Error> {
-    let conn = &mut establish_conn();
-    conn.transaction(|connection| {
-        diesel::update(teller.find(teller_id))
-            .set(active.eq(status))
-            .execute(connection)
     })
 }
+pub fn register_user(user_insert_data: UserInsert) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
+    conn.transaction(|conn| {
+        diesel::insert_into(Users::dsl::Users)
+            .values(user_insert_data)
+            .execute(conn)
+    })
+}
+pub fn register_teller(teller_insert_data: models::TellerInsert) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
+    conn.transaction(|conn| {
+        diesel::insert_into(Tellers::dsl::Tellers)
+            .values(teller_insert_data)
+            .execute(conn)
+    })
+}
+pub fn register_guest(insert_data: models::GuestInsert) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
+    conn.transaction(|conn| {
+        diesel::insert_into(Guests::dsl::Guests)
+            .values(insert_data)
+            .execute(conn)
+    })
+}
+
+
+
+/// Obtain all service Times and sort them according to the randomforest model
 pub fn get_all_service_times() {
     let conn = &mut establish_conn();
     let mut data: Vec<f32> = Vec::new();
     let mut server_loc: Vec<i32> = Vec::new();
     let transactions_data = conn.transaction(|connection| {
-        let results = transaction
+        let results = Transactions::dsl::Transactions
             .select(Transaction::as_select())
             .load(connection);
         results
@@ -70,7 +68,7 @@ pub fn get_all_service_times() {
                 data.push(events.duration);
 
                 let teller_data = conn.transaction(|connection| {
-                    let results = teller
+                    let results = Tellers::dsl::Tellers
                         .select(Teller::as_select())
                         .find(events.server_id)
                         .first(connection);
@@ -83,54 +81,65 @@ pub fn get_all_service_times() {
         Err(_) => {}
     };
 }
-pub fn login_user(
-    conn: &mut MysqlConnection,
-    acc_num: &String,
-    pass_word: &String,
-) -> Option<User> {
-    // let db_data = conn.transaction(|conn| {});
-    let user = users::table
-        .filter(national_id.eq(acc_num))
-        .select(User::as_select())
-        .first(conn);
 
-    match user {
-        Ok(user_data) => {
-            if user_data.password.eq(pass_word) {
-                Some(user_data)
+/*Authentication */
+pub fn login_user(login_data: models::UserLogin) -> Result<String, &'static str> {
+    let conn = &mut establish_conn();
+    let user_data = conn.transaction(|connection| {
+        Users::dsl::Users
+            .select(models::UserLogin::as_select())
+            .filter(Users::account_number.eq(login_data.account_number))
+            .first(connection)
+    });
+    match user_data {
+        Ok(user) => {
+            if user.password.eq(&login_data.password) {
+                Ok(user.account_number)
             } else {
-                None
+                Err("Unable to login User")
             }
         }
-        Err(_) => None,
+        Err(_) => Err("Unable to Find User")
     }
-    // let data = db_data.expect("Unable to search users");
-    // data
-}
-pub fn login_guest(
-    conn: &mut MysqlConnection,
-    account_numbers: String,
-    passwords: String,
-) -> usize {
-    let new_user = User {
-        account_number: account_numbers,
-        password: passwords,
-    };
 
+}
+pub fn login_guest(guest: models::Guest) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
     conn.transaction(|conn| {
-        diesel::insert_into(users::table)
-            .values(&new_user)
+        diesel::insert_into(Guests::table)
+            .values(&guest)
             .execute(conn)
     })
-        .expect("Error loading Data")
+
+}
+pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        Tellers::dsl::Tellers
+            .select(TellerLogin::as_select())
+            .find(teller_login.server_id)
+            .first(connection)
+    });
+    match transactions_data {
+        Ok(teller) => {
+            if teller.password.eq(&teller_login.password) {
+                Ok(teller.server_id)
+            } else {
+                Err("Unable to login Teller")
+            }
+        }
+        Err(_) => Err("Unable to Find Teller")
+    }
+
 }
 
-// Return a vec of a vec of durations and position
-fn sort_tellers(transactions: Vec<Transaction>, teller_data: &Teller) {
-    // let mut data = [0f32; SERVER_COUNT];
-let mut data = Vec::new();
-    // Depending on the server location in the queue split the duration accordingly
-    for transaction_data in transactions {
-        data[teller_data.server_station as usize] = transaction_data.duration;
-    }
+
+/* Teller Actions */
+pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, Error> {
+    let conn = &mut establish_conn();
+    conn.transaction(|connection| {
+        diesel::update(Tellers::dsl::Tellers.find(teller_id))
+            .set(Tellers::active.eq(status))
+            .execute(connection)
+    })
 }

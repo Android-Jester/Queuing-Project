@@ -1,33 +1,26 @@
+use std::sync::Mutex;
+use actix_web::{HttpResponse, Responder, web, post, get};
+use crate::data::models::{Guest, Teller, TellerLogin, Transaction, UserLogin, UserQuery};
+use crate::data_source::db_actions::{add_transaction, set_teller_status};
+use crate::data_source::queuing_techniques::QueueStruct;
+
 pub mod data;
 pub mod data_source;
 #[cfg(test)]
 pub mod tests;
-use crate::{
-    data::models::{Teller, Transaction, User},
-    data_source::db_actions::add_transaction,
-};
-use actix_web::{get, post, web, HttpResponse, Responder};
-use crate::data_source::db_actions::set_teller_status;
-use crate::data_source::queuing_techniques::{add_user_queue, remove_user_queue};
 
 
-#[derive(Serialize, Deserialize, Debug)]
-struct LoginData {
-    account_number: String,
-    password: String,
-}
+
 
 
 
 
 
 /*User Space*/
-
-#[post("/login")]
-async fn login(login_data: web::Json<LoginData>) -> impl Responder {
-    let conn = &mut establish_connection();
-    let user_data = login_user(conn, &login_data.account_number, &login_data.password);
-    if let Some(user) = user_data {
+#[post("/user/login")]
+async fn login_user_request(login_data: web::Json<UserLogin>) -> impl Responder {
+     let user_data = data_source::db_actions::login_user(login_data.into_inner());
+    if let Ok(_) = user_data {
         HttpResponse::Accepted().body("Logged In")
     } else {
         HttpResponse::NotFound().body("User Not Found")
@@ -37,14 +30,42 @@ async fn login(login_data: web::Json<LoginData>) -> impl Responder {
 
 
 
-#[post("/user/join")]
-pub async fn user_join_queue(user: web::Json<User>) -> impl Responder {
-    add_user_queue(user.into_inner(), );
-    HttpResponse::Ok().body("user leaving")
+#[post("/guest/login")]
+async fn login_guest_request(login_data: web::Json<Guest>) -> impl Responder {
+     let guest_data = data_source::db_actions::login_guest(login_data.into_inner());
+    if let Ok(_) = guest_data {
+        HttpResponse::Accepted().body("Logged In")
+    } else {
+        HttpResponse::NotFound().body("User Not Found")
+    }
 }
 
-#[get("/user/waiting_time")]
-pub async fn show_user_waiting_time(user: web::Json<User>) -> impl Responder {
+
+
+
+// #[post("/user/join")]
+pub async fn user_join_queue(user: web::Json<UserQuery>, queue_data: web::Data<Mutex<QueueStruct<UserQuery>>>) -> impl std::future::Future<Output = impl Responder> {
+    let queue_data = &queue_data.into_inner();
+    let mut queue = queue_data.lock().unwrap();
+    match queue.add_item(user.into_inner()) {
+        Ok(_) => HttpResponse::Ok().body("user joining"),
+        Err(e) => HttpResponse::Ok().body(format!("{}", e))
+    }
+
+}
+
+#[post("/user/leave")]
+pub async fn user_leave_queue(user: web::Json<UserQuery>, queue_data: web::Data<Mutex<QueueStruct<UserQuery>>>) -> impl Responder {
+    let queue_mutex_data = &queue_data.into_inner();
+    let mut queue = queue_mutex_data.lock().unwrap();
+    match queue.remove_last_item() {
+        Ok(_) => HttpResponse::Ok().body("user leaving"),
+        Err(e) => HttpResponse::Ok().body(format!("{}", e))
+    }
+}
+
+#[get("/user/time")]
+pub async fn show_user_waiting_time(user: web::Json<UserQuery>) -> impl Responder {
     // let user = user.into_inner();
     // let timer = get_waiting_time(user.account_number);
     // for i in (0..timer).rev() {
@@ -64,14 +85,23 @@ pub async fn record_transaction(transaction: web::Json<Transaction>) -> impl Res
     }
 }
 
+#[post("/teller/login")]
+async fn login_teller_request(login_data: web::Json<TellerLogin>) -> impl Responder {
+    let teller_data = data_source::db_actions::login_teller(login_data.into_inner());
+    if let Ok(_) = teller_data {
+        HttpResponse::Accepted().body("Logged In")
+    } else {
+        HttpResponse::NotFound().body("User Not Found")
+    }
+}
 
 
 
 
-// #[get("/teller/server_list")]
-// pub async fn teller_list(id: String) -> impl Responder {
-//     HttpResponse::Ok().body("Accepted")
-// }
+#[get("/teller/server_list")]
+pub async fn queue_show(teller_id: web::Query<String>) -> impl Responder {
+    HttpResponse::Ok().body("Accepted")
+}
 
 #[post("/teller/status")]
 pub async fn change_teller_status(
@@ -89,7 +119,11 @@ pub async fn logout_teller(teller: web::Json<Teller>) -> impl Responder {
 
 
 #[post("/teller/remove")]
-pub async fn teller_remove_user() -> impl Responder {
-    remove_user_queue();
-    HttpResponse::Ok().body("user leaving")
+pub async fn remove_user(queue_data: web::Data<Mutex<QueueStruct<UserQuery>>>) -> impl Responder {
+    let queue_mutex_data = &queue_data.into_inner();
+    let mut queue = queue_mutex_data.lock().unwrap();
+    match queue.remove_last_item() {
+        Ok(_) => HttpResponse::Ok().body("user leaving"),
+        Err(e) => HttpResponse::Ok().body(format!("{}", e))
+    }
 }

@@ -1,0 +1,48 @@
+.sidebar{
+    flex:1;
+    border-right:0.5px solid rgb(230,227,227);
+    min-height: 100vh;
+    background-color: white;
+    font-weight: bolder;
+   
+}
+
+.top , .bottom{
+    height:50px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+}
+bottom{
+
+}
+.bottom:hover{
+ background-color:#0a85ff ;
+ color:white;
+}
+
+hr{
+    height:0;
+    border:0.5px solid rgb(230,227,227);
+}
+.Tlogo{
+    width:90px;
+
+}
+li{
+    display:flex;
+    align-items: center;
+    padding: 10px;
+    margin-right: 2px;
+    cursor: pointer;
+    margin-top: 100px;
+    margin-bottom: 100px;
+}
+.li::after{
+    background-color:#0a85ff;
+}
+.D_icons{
+    font-size: 40px;
+    color:#0a85ff;
+
+}

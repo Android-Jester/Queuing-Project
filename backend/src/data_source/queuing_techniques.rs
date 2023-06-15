@@ -1,6 +1,5 @@
 use std::f64::consts::E;
 use queues::{IsQueue, Queue};
-use crate::data::models::User;
 
 ///Calculate best of service_times
 pub fn calc_best_avg(avg_times: &[f64]) -> u8 {
@@ -72,16 +71,35 @@ pub fn average_customer_waiting_time_queue(
     top / div
 }
 
-pub fn add_user_queue(user: User, queue: &mut Queue<User>) -> Result<&mut Queue<User>, &str> {
-    match queue.add(user) {
-        Ok(_) => Ok(queue),
-        Err(_) => Err("Cannot Add user")
-    }
+pub struct QueueStruct<T>
+    where T: Clone {
+    queue: Queue<T>
 }
 
-pub fn remove_user_queue(queue: &mut Queue<User>) -> Result<&mut Queue<User>, &str> {
-    match queue.remove() {
-        Ok(_) => Ok(queue),
-        Err(_) => Err("No user exists")
+
+
+
+impl<T> QueueStruct<T> where T: Clone {
+    pub fn new(queue: Queue<T>) -> Self {
+        QueueStruct {
+            queue
+        }
     }
+
+    pub fn add_item(&mut self, item: T) -> Result<&mut Self, &str> {
+        match self.queue.add(item) {
+            Ok(_) => Ok(self),
+            Err(_) => Err("Cannot Add user")
+        }
+    }
+    pub fn remove_last_item(&mut self) -> Result<&mut Self, &str> {
+        match self.queue.remove() {
+            Ok(_) => Ok(self),
+            Err(_) => Err("No user exists")
+        }
+    }
+    pub fn queue_len(&mut self) -> usize {
+        self.queue.size()
+    }
+
 }

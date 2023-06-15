@@ -1,4 +1,4 @@
-DROP TABLE transaction;
-DROP TABLE teller;
-DROP TABLE users;
-DROP TABLE guests;
+DROP TABLE Transactions;
+DROP TABLE Tellers;
+DROP TABLE Users;
+DROP TABLE Guests;

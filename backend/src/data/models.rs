@@ -12,65 +12,122 @@ pub enum TransactionsType {
 }
 
 #[derive(Selectable, Queryable, Insertable, Deserialize)]
-#[diesel(table_name = crate::data::schema::transaction)]
+#[diesel(table_name = crate::data::schema::Transactions)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct Transaction {
     pub transaction_detail: String,
     pub server_id: String,
-    pub user_account_number: String,
+    pub national_id: Option<String>,
+    pub guest_national_id: Option<String>,
     pub duration: f32,
     pub transaction_time: NaiveDateTime,
 }
 
-#[derive(Selectable, Queryable, Insertable, Serialize, Deserialize, Clone)]
-#[diesel(table_name = crate::data::schema::users)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
-pub struct User {
-    pub account_number: String,
+pub struct UserQuery {
     pub national_id: String,
 }
 
-impl Transaction {
+#[derive(Insertable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::data::schema::Users)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct UserInsert {
+    pub account_number: String,
+    pub national_id: String,
+    pub password: String,
+}
 
+
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::data::schema::Users)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct UserLogin {
+    pub account_number: String,
+    pub password: String
+}
+
+#[derive(Selectable, Queryable, Insertable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::data::schema::Guests)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct Guest {
+    pub national_id: String,
+    pub name: String,
+    pub transaction_type: String,
+    pub telephone_num: String,
+}
+
+#[derive(Insertable, Serialize, Deserialize)]
+#[diesel(table_name = crate::data::schema::Guests)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct GuestInsert {
+    pub national_id: String,
+    pub name: String,
+    pub transaction_type: String,
+    pub telephone_num: String,
+}
+
+impl Transaction {
     pub fn new(
-        user_account_number: String,
+        national_id: Option<String>,
+        guest_national_id: Option<String>,
         transaction: TransactionsType,
         server_identification: String,
         transaction_time: NaiveDateTime,
     ) -> Transaction {
-
+        fn select_transaction_type(transaction: TransactionsType) -> (String, f32) {
+            match transaction {
+                TransactionsType::Deposit { service_time } => (format!("deposit"), service_time),
+                TransactionsType::Withdrawal { service_time } => (format!("withdrawal"), service_time),
+                TransactionsType::ForeignExchange { service_time } => {
+                    (format!("foreign_exchange"), service_time)
+                }
+                TransactionsType::BillPayment { service_time } => (format!("payment"), service_time),
+            }
+        }
         let (action, duration) = select_transaction_type(transaction);
         Transaction {
             transaction_detail: action,
-            user_account_number,
+            national_id,
+            guest_national_id,
             server_id: server_identification,
             duration,
             transaction_time,
         }
     }
-
-
 }
-fn select_transaction_type(transaction: TransactionsType) -> (String, f32) {
-    match transaction {
-        TransactionsType::Deposit { service_time } => (format!("deposit"), service_time),
-        TransactionsType::Withdrawal { service_time } => (format!("withdrawal"), service_time),
-        TransactionsType::ForeignExchange { service_time } => {
-            (format!("foreign_exchange"), service_time)
-        }
-        TransactionsType::BillPayment { service_time } => (format!("payment"), service_time),
-    }
-}
+
 
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
-#[diesel(table_name = crate::data::schema::teller)]
+#[diesel(table_name = crate::data::schema::Tellers)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct Teller {
     pub server_id: String,
     pub server_station: i32,
     pub service_time: f32,
     pub active: bool,
+}
+
+#[derive(Insertable, Serialize, Deserialize)]
+#[diesel(table_name = crate::data::schema::Tellers)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct TellerInsert {
+    pub server_id: String,
+    pub server_station: i32,
+    pub service_time: f32,
+    pub active: bool,
+    pub password: String,
+
+}
+
+#[derive(Selectable, Queryable, Deserialize, Serialize)]
+#[diesel(table_name = crate::data::schema::Tellers)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct TellerLogin {
+    pub server_id: String,
+    pub password: String,
 }
 
 impl Teller {

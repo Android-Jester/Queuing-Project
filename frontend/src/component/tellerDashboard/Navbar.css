@@ -1,0 +1,24 @@
+.navbar{
+ height: 60px;
+ border-bottom: 0.5px solid rgb(231,228,228);
+ display:flex;
+ align-items: center;
+ font-size:16px;
+ font-weight: bold;
+ background-color: white;
+}
+.wrapper{
+    padding:20px;
+    display:flex;
+   align-items: center;
+   justify-content: space-between;
+   width:100%
+}
+.Tprofile{
+    font-size:30px;
+    box-shadow: inset  8px 8px 5px #888;
+    border-radius: 20px;
+   
+
+ 
+}

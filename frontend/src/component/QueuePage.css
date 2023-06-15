@@ -1,0 +1,48 @@
+
+
+
+
+
+@media screen and (max-width:960px){
+.QueueHeader{
+ display:flex;
+ justify-content: center;
+ margin-right: 0.3rem;
+ margin-top: 0.2rem;
+    margin-left: 0.3rem;
+ padding-bottom: 0.3rem;
+ border-radius: 2px;
+   
+   background-color:#3e98c7;
+ 
+}
+
+.QueueBody{
+    margin-top:-1rem;
+    display:flex;
+    flex-direction:column;
+    justify-content: center;
+    border: 4px  #ccc;
+    align-items: center;
+    height:80vh;
+    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+   border-radius: 2px;
+   
+   
+   
+}
+.btn{
+    margin-top: 2rem;
+}
+.Qpbutton{
+   width: 12rem;
+   height: 3rem;
+   padding: 5px;
+   color: #fff;
+   font-size: 20px;
+   font-weight: 700;
+   background-image: linear-gradient(45deg,#0a85ff, #1434a9);
+   border-radius: 10rem;
+}
+}
