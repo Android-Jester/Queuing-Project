@@ -52,34 +52,20 @@ pub fn register_guest(insert_data: models::GuestInsert) -> Result<usize, Error> 
 
 
 /// Obtain all service Times and sort them according to the randomforest model
-pub fn get_all_service_times() {
+pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
     let conn = &mut establish_conn();
-    let mut data: Vec<f32> = Vec::new();
-    let mut server_loc: Vec<i32> = Vec::new();
     let transactions_data = conn.transaction(|connection| {
         let results = Transactions::dsl::Transactions
             .select(Transaction::as_select())
             .load(connection);
         results
     });
+   
     match transactions_data {
-        Ok(transactions) => {
-            for events in transactions {
-                data.push(events.duration);
-
-                let teller_data = conn.transaction(|connection| {
-                    let results = Tellers::dsl::Tellers
-                        .select(Teller::as_select())
-                        .find(events.server_id)
-                        .first(connection);
-                    results
-                });
-                server_loc.push(teller_data.expect("Unable get teller").server_station)
-            }
-
-        }
-        Err(_) => {}
-    };
+        Ok(transactions) => Ok(transactions),
+        Err(_) => {Err("Unable to find transactions")}
+    }
+    
 }
 
 /*Authentication */
@@ -133,6 +119,20 @@ pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
 
 }
 
+
+pub fn find_teller(teller_id: String) -> Result<i32, &'static str> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        Tellers::dsl::Tellers
+            .select(Teller::as_select())
+            .find(teller_id)
+            .first(connection)
+    });
+    match transactions_data {
+        Ok(teller) => Ok(teller.server_station),
+        Err(_) => Err("Unable to Find Teller")
+    }
+}
 
 /* Teller Actions */
 pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, Error> {

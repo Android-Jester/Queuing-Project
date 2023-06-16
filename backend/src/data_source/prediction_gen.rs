@@ -2,18 +2,18 @@ use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};
 use std::num::NonZeroUsize;
+use crate::data::SERVER_COUNT;
+use crate::data_source::queuing_techniques::get_all_service_times;
 
 
 ///Split data into test data and train data to verify the fact
 fn classify_data(
-    complete_data: &Vec<(Vec<f64>, f64)>,
+    complete_data: &(Vec<[f64; 4]>, Vec<u8>),
     ratio: usize,
-) -> (Vec<(Vec<f64>, f64)>, Vec<(Vec<f64>, f64)>) {
-    let total_len = complete_data.len();
-    let range_limit = total_len / ratio;
-    let train = complete_data[..range_limit].to_vec();
-    let test = complete_data[range_limit..].to_vec();
-    (train, test)
+) -> (Vec<[f64; 4]>, Vec<u8>) {
+    let (data, targets) = complete_data;
+    let range_limit = data.len() / ratio;
+    (data.to_owned(), targets.to_owned())
 }
 
 
@@ -23,7 +23,7 @@ fn train_model(
     max_features: usize,
     max_samples: usize,
     trees: u64,
-    service_time_train_data: Vec<(Vec<f64>, f64)>,
+    train_data: (Vec<[f64; 4]>, Vec<u8>),
 ) -> RandomForestClassifier {
     let features = NonZeroUsize::new(max_features).unwrap();
     let samples = NonZeroUsize::new(max_samples).unwrap();
@@ -34,10 +34,10 @@ fn train_model(
         .max_samples(samples);
 
     let mut table_builder = TableBuilder::new();
-    for (pos, data) in service_time_train_data.iter().enumerate() {
-        let (service_data, service_target) = data;
+    let (data, target) = train_data;
+    for (item_count, info) in data.iter().enumerate() {
         table_builder
-            .add_row(service_data, *service_target as f64)
+            .add_row(&info[0..], target[item_count] as f64)
             .expect("Data cannot be added");
     }
     let table = table_builder.build().expect("No Table built");
@@ -45,22 +45,19 @@ fn train_model(
 }
 
 /// Test the model for accuracy
-fn test_model_prediction(
+fn model_prediction(
     mut randomforest: &RandomForestClassifier,
-    service_time_test_data: &Vec<f64>,
+    data: &[f64; SERVER_COUNT],
 ) -> f64 {
-    let prediction = randomforest.predict(service_time_test_data);
+    let prediction = randomforest.predict(&*data);
     prediction
 }
 
 // /// predict best line
-// pub fn prediction() {
-//     //     // TODO: Obtain Data from database
-//      let transactions_data = get_all_service_times();
-//     //     // TODO: Classify Data into target and features
-//     let (train, test) = classify_data(&transaction_data, 80);
-//     //     // TODO: Train Model
-//     let mut classifier = train_model(100, 10, 20, train);
-//     // let acc_pred = test_model_prediction(&mut classifier, test);
-//     //     // TODO: Predict Result
-// }
+pub fn prediction(pred: [f64; SERVER_COUNT]) -> u8 {
+    let service_times_data = get_all_service_times();
+    let data = classify_data(&service_times_data, 80);
+    let mut classifier = train_model(100, 10, 20, data);
+    let acc_pred = model_prediction(&mut classifier, &pred);
+    acc_pred as u8
+}
