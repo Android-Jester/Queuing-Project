@@ -1,16 +1,45 @@
-
-use std::sync::Mutex;
-use actix_web::{HttpResponse, Responder, web, post, get};
-use crate::data::models::{Guest, Teller, TellerLogin, Transaction, UserLogin, UserQuery};
-use crate::data_source;
+use crate::data::models::{Teller, TellerLogin, Transaction, UserQueuePos};
 use crate::data_source::db_actions::{add_transaction, set_teller_status};
 use crate::data_source::queuing_techniques::QueueStruct;
+use crate::{data_source, Servers};
+use actix_web::{get, post, web, HttpResponse, Responder};
+use std::sync::Mutex;
 
+pub fn teller_config(conf: &mut web::ServiceConfig) {
+    conf.service(
+        web::scope("/teller")
+            .service(record_transaction)
+            .service(change_teller_status)
+            .service(login_teller_request)
+            .service(remove_user)
+            .service(logout_teller)
+            .service(queue_show),
+    );
+}
 
+#[get("/")]
+pub async fn server_trial() -> impl Responder {
+    HttpResponse::Ok().body("Hello")
+}
 
 #[get("/server_list")]
-pub async fn queue_show(teller_id: web::Query<String>) -> impl Responder {
-    HttpResponse::Ok().body("Accepted")
+pub async fn queue_show(
+    teller_id: web::Json<String>,
+    queue_data: web::Data<Mutex<QueueStruct>>,
+) -> impl Responder {
+    // let queue_length = &queue_data.lock().unwrap().queue_len();
+
+    // let teller: Teller;
+    // let current_queue = queue_data.lock().unwrap();
+
+    // for index in 0..*queue_length {
+    //     let current_pos = index % SERVER_COUNT;
+    //     if current_queue.get_user(index) {
+    //         teller_queue
+    //     }
+    // }
+
+    HttpResponse::Ok().body(format!("{}", teller_id))
 }
 
 #[post("/add_transaction")]
@@ -33,17 +62,22 @@ pub async fn change_teller_status(
 
 #[post("/logout")]
 pub async fn logout_teller(teller: web::Json<Teller>) -> impl Responder {
-    HttpResponse::Ok().body(format!("Logged out"))
+    HttpResponse::Ok().body(format!("Logged out: {}", teller))
 }
 
-
 #[post("/remove")]
-pub async fn remove_user(queue_data: web::Data<Mutex<QueueStruct<UserQuery>>>) -> impl Responder {
+pub async fn remove_user(
+    queue_data: web::Data<Mutex<QueueStruct>>,
+    server_queue: web::Data<Mutex<Servers>>,
+) -> impl Responder {
     let queue_mutex_data = &queue_data.into_inner();
+    let server = &server_queue.into_inner();
+    let mut mutex_server = server.lock().unwrap();
     let mut queue = queue_mutex_data.lock().unwrap();
-    match queue.remove_last_item() {
+    let queue_length = &queue.queue_len();
+    match queue.remove_item(queue_length, &mut mutex_server) {
         Ok(_) => HttpResponse::Ok().body("user leaving"),
-        Err(e) => HttpResponse::Ok().body(format!("{}", e))
+        Err(e) => HttpResponse::Ok().body(format!("{}", e)),
     }
 }
 

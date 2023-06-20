@@ -1,5 +1,6 @@
 CREATE TABLE Users (
    user_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+   name TEXT NOT NULL,
    account_number VARCHAR(255) NOT NULL,
    national_id VARCHAR(15) UNIQUE NOT NULL,
    password VARCHAR(16) NOT NULL
@@ -8,7 +9,7 @@ CREATE TABLE Users (
 
 CREATE TABLE Guests(
    national_id VARCHAR(15) PRIMARY KEY,
-   name VARCHAR(255) NOT NULL,
+   name TEXT NOT NULL,
    transaction_type VARCHAR(255) NOT NULL,
    telephone_num VARCHAR(10) NOT NULL
 );

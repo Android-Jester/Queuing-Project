@@ -1,11 +1,11 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Guests (national_id) {
         #[max_length = 15]
         national_id -> Varchar,
-        #[max_length = 255]
-        name -> Varchar,
+        name -> Text,
         #[max_length = 255]
         transaction_type -> Varchar,
         #[max_length = 10]
@@ -14,6 +14,7 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Tellers (server_id) {
         #[max_length = 255]
         server_id -> Varchar,
@@ -26,6 +27,7 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Transactions (id) {
         id -> Integer,
         #[max_length = 255]
@@ -42,8 +44,10 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Users (user_id) {
         user_id -> Integer,
+        name -> Text,
         #[max_length = 255]
         account_number -> Varchar,
         #[max_length = 15]
@@ -56,9 +60,4 @@ diesel::table! {
 diesel::joinable!(Transactions -> Guests (guest_national_id));
 diesel::joinable!(Transactions -> Tellers (server_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    Guests,
-    Tellers,
-    Transactions,
-    Users,
-);
+diesel::allow_tables_to_appear_in_same_query!(Guests, Tellers, Transactions, Users,);

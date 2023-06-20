@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use diesel::{Insertable, Queryable, Selectable};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
 pub enum TransactionsType {
     Deposit { service_time: f32 },
@@ -23,14 +23,22 @@ pub struct Transaction {
     pub transaction_time: NaiveDateTime,
 }
 
-#[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserQuery {
     pub national_id: String,
 }
 
-#[derive(Insertable, Serialize, Deserialize, Clone)]
+#[derive(Deserialize, Clone)]
+pub struct UserQueuePos {
+    pub national_id: String,
+    pub queue_pos: usize,
+    pub teller_queue_pos: Option<usize>,
+    pub assigned_teller: Option<usize>,
+}
+
+#[derive(Queryable, Insertable, Selectable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserInsert {
@@ -39,13 +47,12 @@ pub struct UserInsert {
     pub password: String,
 }
 
-
 #[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserLogin {
     pub account_number: String,
-    pub password: String
+    pub password: String,
 }
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize, Clone)]
@@ -79,11 +86,15 @@ impl Transaction {
         fn select_transaction_type(transaction: TransactionsType) -> (String, f32) {
             match transaction {
                 TransactionsType::Deposit { service_time } => (format!("deposit"), service_time),
-                TransactionsType::Withdrawal { service_time } => (format!("withdrawal"), service_time),
+                TransactionsType::Withdrawal { service_time } => {
+                    (format!("withdrawal"), service_time)
+                }
                 TransactionsType::ForeignExchange { service_time } => {
                     (format!("foreign_exchange"), service_time)
                 }
-                TransactionsType::BillPayment { service_time } => (format!("payment"), service_time),
+                TransactionsType::BillPayment { service_time } => {
+                    (format!("payment"), service_time)
+                }
             }
         }
         let (action, duration) = select_transaction_type(transaction);
@@ -97,8 +108,6 @@ impl Transaction {
         }
     }
 }
-
-
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = crate::data::schema::Tellers)]
@@ -119,7 +128,6 @@ pub struct TellerInsert {
     pub service_time: f32,
     pub active: bool,
     pub password: String,
-
 }
 
 #[derive(Selectable, Queryable, Deserialize, Serialize)]

@@ -1,22 +1,15 @@
+use crate::data::SERVER_COUNT;
+use crate::data_source::queuing_techniques::get_all_service_times;
 use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};
 use std::num::NonZeroUsize;
-use crate::data::SERVER_COUNT;
-use crate::data_source::queuing_techniques::get_all_service_times;
-
 
 ///Split data into test data and train data to verify the fact
-fn classify_data(
-    complete_data: &(Vec<[f64; 4]>, Vec<u8>),
-    ratio: usize,
-) -> (Vec<[f64; 4]>, Vec<u8>) {
+fn classify_data(complete_data: &(Vec<[f64; 4]>, Vec<u8>)) -> (Vec<[f64; 4]>, Vec<u8>) {
     let (data, targets) = complete_data;
-    let range_limit = data.len() / ratio;
     (data.to_owned(), targets.to_owned())
 }
-
-
 
 /// Training the model
 fn train_model(
@@ -44,20 +37,11 @@ fn train_model(
     random_forest_option_data.fit(Gini, table)
 }
 
-/// Test the model for accuracy
-fn model_prediction(
-    mut randomforest: &RandomForestClassifier,
-    data: &[f64; SERVER_COUNT],
-) -> f64 {
-    let prediction = randomforest.predict(&*data);
-    prediction
-}
-
-// /// predict best line
+/// predict best line
 pub fn prediction(pred: [f64; SERVER_COUNT]) -> u8 {
     let service_times_data = get_all_service_times();
-    let data = classify_data(&service_times_data, 80);
-    let mut classifier = train_model(100, 10, 20, data);
-    let acc_pred = model_prediction(&mut classifier, &pred);
+    let data = classify_data(&service_times_data);
+    let classifier = train_model(100, 10, 20, data);
+    let acc_pred = classifier.predict(&pred);
     acc_pred as u8
 }

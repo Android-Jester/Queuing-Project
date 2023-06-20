@@ -7,10 +7,16 @@ edition = "2021"
 
 [dependencies]
 actix-web = { version = "4.3.1" }
+actix-cors = { version = "0.6.4" }
 dotenvy = "0.15.7"
-diesel = { version = "2.1.0", features = ["mysql", "mysql_backend", "chrono", "serde_json"] }
+diesel = { version = "2.1.0", features = [
+    "mysql",
+    "mysql_backend",
+    "chrono",
+    "serde_json",
+] }
 randomforest = "0.1.6"
 serde = { version = "1.0.163", features = ["derive"] }
 chrono = { version = "0.4.26", features = ["serde"] }
-simple-log = {version = "1.6.0"}
-queues = {version = "1.1.0"}
+simple-log = { version = "1.6.0" }
+queues = { version = "1.1.0" }

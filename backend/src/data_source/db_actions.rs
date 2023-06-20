@@ -1,19 +1,17 @@
-
+use crate::data::models;
+use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert};
+use crate::data::schema::{Guests, Tellers, Transactions, Users};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::{Connection, MysqlConnection};
 use dotenvy::dotenv;
 use std::env;
-use crate::data::models;
-use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert};
-use crate::data::schema::{Transactions, Users, Tellers, Guests};
 
-fn establish_conn() -> MysqlConnection {
+pub fn establish_conn() -> MysqlConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     MysqlConnection::establish(&database_url).expect("Unable to connect to DB")
 }
-
 
 /*Adding Data*/
 pub fn add_transaction(transaction_data: Transaction) -> Result<usize, Error> {
@@ -49,8 +47,6 @@ pub fn register_guest(insert_data: models::GuestInsert) -> Result<usize, Error> 
     })
 }
 
-
-
 /// Obtain all service Times and sort them according to the randomforest model
 pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
     let conn = &mut establish_conn();
@@ -60,12 +56,25 @@ pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
             .load(connection);
         results
     });
-   
+
     match transactions_data {
         Ok(transactions) => Ok(transactions),
-        Err(_) => {Err("Unable to find transactions")}
+        Err(_) => Err("Unable to find transactions"),
     }
-    
+}
+pub fn list_users_db() -> Result<Vec<UserInsert>, &'static str> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        let results = Users::dsl::Users
+            .select(UserInsert::as_select())
+            .load(connection);
+        results
+    });
+
+    match transactions_data {
+        Ok(transactions) => Ok(transactions),
+        Err(_) => Err("Unable to find transactions"),
+    }
 }
 
 /*Authentication */
@@ -85,9 +94,8 @@ pub fn login_user(login_data: models::UserLogin) -> Result<String, &'static str>
                 Err("Unable to login User")
             }
         }
-        Err(_) => Err("Unable to Find User")
+        Err(_) => Err("Unable to Find User"),
     }
-
 }
 pub fn login_guest(guest: models::Guest) -> Result<usize, Error> {
     let conn = &mut establish_conn();
@@ -96,7 +104,6 @@ pub fn login_guest(guest: models::Guest) -> Result<usize, Error> {
             .values(&guest)
             .execute(conn)
     })
-
 }
 pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
     let conn = &mut establish_conn();
@@ -114,13 +121,11 @@ pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
                 Err("Unable to login Teller")
             }
         }
-        Err(_) => Err("Unable to Find Teller")
+        Err(_) => Err("Unable to Find Teller"),
     }
-
 }
 
-
-pub fn find_teller(teller_id: String) -> Result<i32, &'static str> {
+pub fn find_teller(teller_id: String) -> Result<Teller, &'static str> {
     let conn = &mut establish_conn();
     let transactions_data = conn.transaction(|connection| {
         Tellers::dsl::Tellers
@@ -129,8 +134,8 @@ pub fn find_teller(teller_id: String) -> Result<i32, &'static str> {
             .first(connection)
     });
     match transactions_data {
-        Ok(teller) => Ok(teller.server_station),
-        Err(_) => Err("Unable to Find Teller")
+        Ok(teller) => Ok(teller),
+        Err(_) => Err("Unable to Find Teller"),
     }
 }
 

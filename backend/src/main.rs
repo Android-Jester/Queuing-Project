@@ -1,42 +1,35 @@
 use std::sync::Mutex;
-use actix_web::{get, App, HttpResponse, HttpServer, Responder, web};
-use queues::{Queue, queue};
-use queuing_server::data::models::UserQuery;
+
+use actix_cors::Cors;
+use actix_web::web;
+use actix_web::{App, HttpServer};
+use queuing_server::data::models::*;
 use queuing_server::interface::teller_interface::*;
 use queuing_server::interface::user_interface::*;
 
 
+
+/// Main File for runnning server
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .allow_any_origin();
         App::new()
+            .wrap(cors)
+            .app_data(web::Data::new(Mutex::new(
+                queuing_server::data_source::queuing_techniques::QueueStruct::<UserQuery>::new(),
+            )))
+            .app_data(web::Data::new(Mutex::new(Servers::new())))
+            .service(server_trial)
             /*Teller Actions*/
-            .service(
-                web::scope("/teller")
-                    .service(record_transaction)
-                    .service(change_teller_status)
-                    .service(login_teller_request)
-                    .service(remove_user)
-                    .service(logout_teller)
-                    .service(queue_show)
-            )
+            .configure(teller_config)
             /*User Actions*/
-            .service(
-                web::scope("/user")
-                    .app_data(
-                        web::Data::new(Mutex::new(queuing_server::data_source::queuing_techniques::QueueStruct::<UserQuery>::new()))
-                    )
-                    .service(login_user_request)
-                    .service(login_guest_request)
-                    .service(user_join_queue)
-                    .service(user_leave_queue)
-                    .service(show_user_waiting_time)
-            )
-    }
-    )
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+            .configure(user_config)
+    })
+    .bind(("0.0.0.0", 3000))?
+    .run()
+    .await
 }
-
-

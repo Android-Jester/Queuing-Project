@@ -1,7 +1,10 @@
-use std::collections::VecDeque;
-use std::f64::consts::E;
+use crate::data::models::{Teller, UserQueuePos};
 use crate::data::{CUSTOMER_COUNT, SERVER_COUNT};
 use crate::data_source::db_actions::{find_teller, list_transactions};
+use crate::Servers;
+use std::collections::VecDeque;
+use std::f64::consts::E;
+use crate::data::schema::Tellers::service_time;
 
 // ///Calculate best of service_times
 pub fn calc_best_avg(avg_times: [f64; SERVER_COUNT]) -> u8 {
@@ -35,14 +38,14 @@ fn factorial(num: u8) -> u64 {
 }
 
 pub fn efficiciency_rate(arrival_rate: f64, service_times: f64) -> f64 {
-        arrival_rate / (SERVER_COUNT as f64 * service_times)
+    arrival_rate / (SERVER_COUNT as f64 * service_times)
 }
 
 /// Average number of customers in queue + currently in service
 pub fn average_customer_count_system(
     arrival_rate: f64,
     service_rate: f64,
-    service_times: Vec<f64>
+    service_times: Vec<f64>,
 ) -> f64 {
     let efficiency_rate = efficiciency_rate(arrival_rate, service_rate);
     let avg_service = calc_avg_time(service_times);
@@ -53,10 +56,7 @@ pub fn average_customer_count_system(
 }
 
 /// Average number of customers in queue only
-pub fn average_customer_count_queue(
-    arrival_rate: f64,
-    service_rate: f64,
-) -> f64 {
+pub fn average_customer_count_queue(arrival_rate: f64, service_rate: f64) -> f64 {
     let efficiency_rate = efficiciency_rate(arrival_rate, service_rate);
     let expo =
         efficiency_rate.powi(SERVER_COUNT as i32 + 1) * probability_of_none(arrival_rate, 1.0);
@@ -65,10 +65,7 @@ pub fn average_customer_count_queue(
     expo / div
 }
 
-pub fn average_customer_waiting_time_queue(
-    arrival_rate: f64,
-    service_rate: f64,
-) -> f64 {
+pub fn average_customer_waiting_time_queue(arrival_rate: f64, service_rate: f64) -> f64 {
     let efficiency_rate = efficiciency_rate(arrival_rate, service_rate);
     let top = efficiency_rate.powi(SERVER_COUNT as i32) * probability_of_none(arrival_rate, 1.0);
     let frac = (1.0 - (efficiency_rate / SERVER_COUNT as f64)).powi(2);
@@ -76,10 +73,7 @@ pub fn average_customer_waiting_time_queue(
     top / div
 }
 
-pub fn average_customer_waiting_time_system(
-    arrival_rate: f64,
-    service_rate: f64,
-) -> f64 {
+pub fn average_customer_waiting_time_system(arrival_rate: f64, service_rate: f64) -> f64 {
     let efficiency_rate = efficiciency_rate(arrival_rate, service_rate);
     let top = efficiency_rate.powi(SERVER_COUNT as i32) * probability_of_none(arrival_rate, 1.0);
     let frac = (1.0 - (efficiency_rate / SERVER_COUNT as f64)).powi(2);
@@ -102,12 +96,17 @@ pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
             2 => server_2.push(transaction.duration as f64),
             3 => server_3.push(transaction.duration as f64),
             4 => server_4.push(transaction.duration as f64),
-            _ => {},
+            _ => {}
         };
     }
 
     for data in 0..server_1.len() {
-        service_times.push([server_1[data], server_2[data], server_3[data], server_4[data]])
+        service_times.push([
+            server_1[data],
+            server_2[data],
+            server_3[data],
+            server_4[data],
+        ])
     }
 
     for ser_time in &service_times {
@@ -116,47 +115,82 @@ pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
     (service_times, besto)
 }
 
-
-pub struct QueueStruct<T> {
-    queue: VecDeque<T>
+pub struct QueueStruct {
+    queue: VecDeque<UserQueuePos>,
 }
 
-impl<T> QueueStruct<T> {
+impl QueueStruct {
     pub fn new() -> Self {
         QueueStruct {
-            queue: VecDeque::with_capacity(CUSTOMER_COUNT)
+            queue: VecDeque::with_capacity(CUSTOMER_COUNT),
         }
     }
-    pub fn add_item(&mut self, item: T) -> Result<&mut Self, &str> {
+    pub fn add_item(
+        &mut self,
+        item: UserQueuePos,
+        servers_queues: &mut Servers,
+    ) -> Result<&mut Self, &str> {
+        self.queue.push_front(item.clone());
+        Self::assign_users(self.queue.clone(), item.queue_pos, servers_queues);
+        Ok(self)
+    }
 
-        self.queue.push_front(item);
-            Ok(self)
-            // Err("Unable to add item")
-        }
     pub fn queue_len(&self) -> usize {
         self.queue.len()
     }
-    pub fn remove_last_item(&mut self) -> Result<&mut Self, &str> {
-        if self.queue_len() <= CUSTOMER_COUNT {
-            match self.queue.remove(self.queue_len()) {
-                None => Err("Unable to remove self"),
-                Some(_) => Ok(self)
-            }
-        } else {
-            Err("Queue is full")
-        }
-    }
-    pub fn remove_item(&mut self, index: usize) -> Result<&mut Self, &str> {
+
+    pub fn remove_item(&mut self, main_queue_index: &usize, servers: &mut Servers) -> Result<&mut Self, &str> {
+        let teller_pos: usize = main_queue_index % SERVER_COUNT;
+
+        Self::remove_teller_users(self.queue.clone(), *index, servers);
         if self.queue_len() <= CUSTOMER_COUNT && self.queue_len() > 0 {
-            match self.queue.remove(index) {
+            match self.queue.remove(index.clone()) {
                 None => Err("Unable to remove self"),
-                Some(_) => Ok(self)
+                Some(_) => {
+
+                    Ok(self)
+                }
             }
         } else {
             Err("Queue is full")
         }
     }
-    pub fn get_waiting_time(&self, index: usize) -> f64 {
-        0.0
+    pub fn set_up_timer(&mut self, prev_remaining_time: f64, service_period: f64, server_index: usize) -> f64 {
+        let mut timer = 0.0;
+        if server_index > 2 {
+            timer = (service_period * server_index as f64) + prev_remaining_time as f64 ;
+        } else if server_index <= 2 {
+            timer = prev_remaining_time as f64;
+        }
+        timer
     }
+    pub fn get_waiting_time(&mut self, teller: Teller, prev_remaining_time: f64, user_server_pos: usize) -> f64 {
+        let timer = self.set_up_timer(prev_remaining_time, teller.service_time as f64, user_server_pos);
+        timer
     }
+    pub fn assign_users(
+        self_queue: VecDeque<UserQueuePos>,
+        main_queue_index: usize,
+        servers: &mut Servers,
+    ) -> Result<&mut Servers, &str> {
+        let pos: usize = main_queue_index % SERVER_COUNT;
+        let user_data = self_queue[main_queue_index].clone();
+        match servers.add_server_customer(pos, user_data) {
+            Ok(data ) => Ok(data),
+            Err(d) => Err("Unable to assign user to teller")
+        }
+    }
+
+    pub fn remove_teller_users(
+        self_queue: VecDeque<UserQueuePos>,
+        main_queue_index: usize,
+        servers: &mut Servers,
+    ) -> Result<&mut Servers, &str> {
+        let pos: usize = main_queue_index % SERVER_COUNT;
+        let user_data = self_queue[main_queue_index].clone();
+        match servers.remove_server_customer(user_data, pos) {
+            Ok(data) => Ok(data),
+            Err(d) => Err("Unable to remove user to teller")
+        }
+    }
+}
