@@ -1,8 +1,8 @@
-use crate::data::models::{Teller, TellerLogin, Transaction, UserQueuePos};
+use crate::data::models::*;
 use crate::data_source::db_actions::{add_transaction, set_teller_status};
 use crate::data_source::queuing_techniques::QueueStruct;
 use crate::{data_source, Servers};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use std::sync::Mutex;
 
 pub fn teller_config(conf: &mut web::ServiceConfig) {
@@ -12,35 +12,30 @@ pub fn teller_config(conf: &mut web::ServiceConfig) {
             .service(change_teller_status)
             .service(login_teller_request)
             .service(remove_user)
-            .service(logout_teller)
-            .service(queue_show),
+            .service(logout_teller),
+        // .service(queue_show),
     );
 }
 
-#[get("/")]
-pub async fn server_trial() -> impl Responder {
-    HttpResponse::Ok().body("Hello")
-}
+// #[get("/server_list")]
+// pub async fn queue_show(
+//     teller_id: web::Json<String>,
+//     queue_data: web::Data<Mutex<QueueStruct>>,
+// ) -> impl Responder {
+//     // let queue_length = &queue_data.lock().unwrap().queue_len();
 
-#[get("/server_list")]
-pub async fn queue_show(
-    teller_id: web::Json<String>,
-    queue_data: web::Data<Mutex<QueueStruct>>,
-) -> impl Responder {
-    // let queue_length = &queue_data.lock().unwrap().queue_len();
+//     // let teller: Teller;
+//     // let current_queue = queue_data.lock().unwrap();
 
-    // let teller: Teller;
-    // let current_queue = queue_data.lock().unwrap();
+//     // for index in 0..*queue_length {
+//     //     let current_pos = index % SERVER_COUNT;
+//     //     if current_queue.get_user(index) {
+//     //         teller_queue
+//     //     }
+//     // }
 
-    // for index in 0..*queue_length {
-    //     let current_pos = index % SERVER_COUNT;
-    //     if current_queue.get_user(index) {
-    //         teller_queue
-    //     }
-    // }
-
-    HttpResponse::Ok().body(format!("{}", teller_id))
-}
+//     HttpResponse::Ok().body(format!("{}", teller_id))
+// }
 
 #[post("/add_transaction")]
 pub async fn record_transaction(transaction: web::Json<Transaction>) -> impl Responder {
@@ -74,17 +69,17 @@ pub async fn remove_user(
     let server = &server_queue.into_inner();
     let mut mutex_server = server.lock().unwrap();
     let mut queue = queue_mutex_data.lock().unwrap();
-    let queue_length = &queue.queue_len();
-    match queue.remove_item(queue_length, &mut mutex_server) {
+    let queue_length = &queue.queue.len();
+    match queue.remove_item(*queue_length, &mut mutex_server) {
         Ok(_) => HttpResponse::Ok().body("user leaving"),
-        Err(e) => HttpResponse::Ok().body(format!("{}", e)),
+        Err(e) => HttpResponse::Ok().body(e.to_string()),
     }
 }
 
 #[post("/login")]
 pub async fn login_teller_request(login_data: web::Json<TellerLogin>) -> impl Responder {
     let teller_data = data_source::db_actions::login_teller(login_data.into_inner());
-    if let Ok(_) = teller_data {
+    if teller_data.is_ok() {
         HttpResponse::Accepted().body("Logged In")
     } else {
         HttpResponse::NotFound().body("User Not Found")

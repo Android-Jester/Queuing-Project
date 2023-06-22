@@ -10,7 +10,7 @@ CREATE TABLE Users (
 CREATE TABLE Guests(
    national_id VARCHAR(15) PRIMARY KEY,
    name TEXT NOT NULL,
-   transaction_type VARCHAR(255) NOT NULL,
+   transaction_type VARCHAR(12) NOT NULL,
    telephone_num VARCHAR(10) NOT NULL
 );
 

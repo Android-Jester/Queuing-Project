@@ -1,4 +1,5 @@
 use data::models::UserQueuePos;
+use crate::data::models::UserQuery;
 
 pub mod data;
 pub mod data_source;
@@ -7,14 +8,14 @@ pub mod interface;
 pub mod tests;
 
 pub struct Servers {
-    pub server_1: Vec<UserQueuePos>,
-    pub server_2: Vec<UserQueuePos>,
-    pub server_3: Vec<UserQueuePos>,
-    pub server_4: Vec<UserQueuePos>,
+    pub server_1: Vec<UserQuery>,
+    pub server_2: Vec<UserQuery>,
+    pub server_3: Vec<UserQuery>,
+    pub server_4: Vec<UserQuery>,
 }
 
-impl Servers {
-    pub fn new() -> Self {
+impl Default for Servers {
+    fn default() -> Self {
         Self {
             server_1: vec![],
             server_2: vec![],
@@ -22,49 +23,57 @@ impl Servers {
             server_4: vec![],
         }
     }
-    pub fn add_server_customer(&mut self, server_index: usize, user: UserQueuePos) -> Result<&mut self, &str> {
+}
+
+impl Servers {
+    // pub fn new() -> Self {}
+    pub fn add_server_customer(
+        &mut self,
+        server_index: usize,
+        user: UserQuery,
+    ) -> Result<(usize, usize), &str> {
         match server_index {
             1 => {
                 if self.server_1.len() < usize::MAX {
                     self.server_1.push(user);
-                    Ok(self)
+                    Ok((1, self.server_1.len()))
                 } else {
                     Err("Unable to add customer")
                 }
-            },
+            }
             2 => {
                 if self.server_2.len() < usize::MAX {
                     self.server_2.push(user);
-                    Ok(self)
+                    Ok((2, self.server_2.len()))
                 } else {
                     Err("Unable to add customer")
                 }
-            },
+            }
             3 => {
                 if self.server_3.len() < usize::MAX {
                     self.server_3.push(user);
-                    Ok(self)
+                    Ok((3, self.server_3.len()))
                 } else {
                     Err("Unable to add customer")
                 }
-            },
+            }
             0 => {
                 if self.server_4.len() < usize::MAX {
                     self.server_4.push(user);
-                    Ok(self)
+                    Ok((4, self.server_4.len()))
                 } else {
                     Err("Unable to add customer")
                 }
-            },
-            _ => {
-                Err("Server Does not exist")
             }
+            _ => Err("Server Does not exist"),
         }
     }
 
-
-
-    pub fn remove_server_customer(&mut self, user: UserQueuePos, server_index: usize,) -> Result<&mut self, &str> {
+    pub fn remove_server_customer(
+        &mut self,
+        user: UserQueuePos,
+        server_index: usize,
+    ) -> Result<&mut Self, &str> {
         if let Some(index) = user.teller_queue_pos {
             match server_index {
                 1 => {
@@ -74,7 +83,7 @@ impl Servers {
                     } else {
                         Err("Unable to add customer")
                     }
-                },
+                }
                 2 => {
                     if self.server_2.len() > 0 {
                         self.server_2.remove(index);
@@ -82,7 +91,7 @@ impl Servers {
                     } else {
                         Err("Unable to add customer")
                     }
-                },
+                }
                 3 => {
                     if self.server_3.len() > 0 {
                         self.server_3.remove(index);
@@ -90,7 +99,7 @@ impl Servers {
                     } else {
                         Err("Unable to add customer")
                     }
-                },
+                }
                 0 => {
                     if self.server_4.len() > 0 {
                         self.server_4.remove(index);
@@ -98,18 +107,11 @@ impl Servers {
                     } else {
                         Err("Unable to add customer")
                     }
-                },
-                _ => {
-                    Err("Server Does not exist")
                 }
+                _ => Err("Server Does not exist"),
             }
-        }
-        else {
+        } else {
             Err("User Does not exist")
         }
-
-
     }
-
-
 }

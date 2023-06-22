@@ -30,12 +30,18 @@ pub struct UserQuery {
     pub national_id: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct UserQueuePos {
     pub national_id: String,
     pub queue_pos: usize,
     pub teller_queue_pos: Option<usize>,
     pub assigned_teller: Option<usize>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct UserQueryData {
+    pub national_id: String,
+    pub action: String,
 }
 
 #[derive(Queryable, Insertable, Selectable, Serialize, Deserialize, Clone)]
@@ -45,6 +51,15 @@ pub struct UserInsert {
     pub account_number: String,
     pub national_id: String,
     pub password: String,
+}
+
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::data::schema::Users)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct UserLoginQuery {
+    pub account_number: String,
+    pub password: String,
+    pub national_id: String,
 }
 
 #[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
@@ -85,15 +100,15 @@ impl Transaction {
     ) -> Transaction {
         fn select_transaction_type(transaction: TransactionsType) -> (String, f32) {
             match transaction {
-                TransactionsType::Deposit { service_time } => (format!("deposit"), service_time),
+                TransactionsType::Deposit { service_time } => ("deposit".to_string(), service_time),
                 TransactionsType::Withdrawal { service_time } => {
-                    (format!("withdrawal"), service_time)
+                    ("withdrawal".to_string(), service_time)
                 }
                 TransactionsType::ForeignExchange { service_time } => {
-                    (format!("foreign_exchange"), service_time)
+                    ("foreign_exchange".to_string(), service_time)
                 }
                 TransactionsType::BillPayment { service_time } => {
-                    (format!("payment"), service_time)
+                    ("payment".to_string(), service_time)
                 }
             }
         }

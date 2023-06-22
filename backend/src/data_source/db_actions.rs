@@ -1,5 +1,5 @@
 use crate::data::models;
-use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert};
+use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert, UserQuery};
 use crate::data::schema::{Guests, Tellers, Transactions, Users};
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -51,10 +51,9 @@ pub fn register_guest(insert_data: models::GuestInsert) -> Result<usize, Error> 
 pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
     let conn = &mut establish_conn();
     let transactions_data = conn.transaction(|connection| {
-        let results = Transactions::dsl::Transactions
+        Transactions::dsl::Transactions
             .select(Transaction::as_select())
-            .load(connection);
-        results
+            .load(connection)
     });
 
     match transactions_data {
@@ -65,10 +64,9 @@ pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
 pub fn list_users_db() -> Result<Vec<UserInsert>, &'static str> {
     let conn = &mut establish_conn();
     let transactions_data = conn.transaction(|connection| {
-        let results = Users::dsl::Users
+        Users::dsl::Users
             .select(UserInsert::as_select())
-            .load(connection);
-        results
+            .load(connection)
     });
 
     match transactions_data {
@@ -82,14 +80,14 @@ pub fn login_user(login_data: models::UserLogin) -> Result<String, &'static str>
     let conn = &mut establish_conn();
     let user_data = conn.transaction(|connection| {
         Users::dsl::Users
-            .select(models::UserLogin::as_select())
+            .select(models::UserLoginQuery::as_select())
             .filter(Users::account_number.eq(login_data.account_number))
             .first(connection)
     });
     match user_data {
         Ok(user) => {
             if user.password.eq(&login_data.password) {
-                Ok(user.account_number)
+                Ok(user.national_id)
             } else {
                 Err("Unable to login User")
             }
@@ -97,13 +95,17 @@ pub fn login_user(login_data: models::UserLogin) -> Result<String, &'static str>
         Err(_) => Err("Unable to Find User"),
     }
 }
-pub fn login_guest(guest: models::Guest) -> Result<usize, Error> {
+pub fn login_guest(guest: models::Guest) -> Result<String, &'static str> {
     let conn = &mut establish_conn();
-    conn.transaction(|conn| {
+    let res = conn.transaction(|conn| {
         diesel::insert_into(Guests::table)
             .values(&guest)
             .execute(conn)
-    })
+    });
+    match res {
+        Ok(_) => Ok(guest.name),
+        Err(_) => Err("Guest cannot be logged in"),
+    }
 }
 pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
     let conn = &mut establish_conn();
@@ -139,6 +141,19 @@ pub fn find_teller(teller_id: String) -> Result<Teller, &'static str> {
     }
 }
 
+pub fn find_user(user_national_id: String) -> Result<UserQuery, &'static str> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        Users::dsl::Users
+            .select(UserQuery::as_select())
+            .filter(Users::national_id.eq(user_national_id))
+            .first(connection)
+    });
+    match transactions_data {
+        Ok(teller) => Ok(teller),
+        Err(_) => Err("Unable to Find Teller"),
+    }
+}
 /* Teller Actions */
 pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, Error> {
     let conn = &mut establish_conn();
