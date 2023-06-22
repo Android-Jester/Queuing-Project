@@ -1,6 +1,10 @@
+use std::sync::MutexGuard;
+
 use crate::data::models::{UserQuery, UserQueuePos};
 use crate::data::{CUSTOMER_COUNT, SERVER_COUNT};
 use crate::data_source::db_actions::{find_teller, list_transactions};
+use crate::interface::teller_interface::TellersQueue;
+use crate::interface::user_interface::show_user_waiting_time;
 use crate::Servers;
 // use std::f64::consts::E;
 // ///Calculate best of service_times
@@ -110,6 +114,7 @@ pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
     }
     (service_times, best_queue)
 }
+#[derive(Debug)]
 pub struct QueueStruct {
     pub queue: Vec<UserQueuePos>,
 }
@@ -133,23 +138,28 @@ impl QueueStruct {
     pub fn add_item<'a>(
         &'a mut self,
         item: UserQuery,
+        teller_queue: &MutexGuard<TellersQueue>,
         servers_queues: &'a mut Servers,
     ) -> Result<UserQueuePos, &str> {
-        let queue = &mut self.queue;
-        if  queue.len() < CUSTOMER_COUNT {
-
-            match Self::assign_users(item.clone(), queue.len() + 1,servers_queues) {
+        // let queue = self;
+        if self.queue.len() < CUSTOMER_COUNT {
+            match Self::assign_users(item.clone(), self.queue.len() + 1, servers_queues) {
                 // the user position, position in server, assigned teller
                 Ok((teller_loc, server_queue_pos)) => {
+                    let user_pos = self.queue.len() + 1;
+                    let teller_id = teller_queue.find_teller(teller_loc);
+                    let timer = show_user_waiting_time(teller_id.server_id, self, server_queue_pos.clone());
+
                     let user_pos = UserQueuePos {
                         national_id: item.national_id,
-                        queue_pos: queue.len(),
+                        queue_pos: user_pos,
                         teller_queue_pos: Some(server_queue_pos),
                         assigned_teller: Some(teller_loc),
+                        timer,
                     };
-                    queue.push(user_pos.clone());
+                    self.queue.push(user_pos.clone());
                     Ok(user_pos)
-                },
+                }
                 Err(err) => Err(err),
             }
         } else {
@@ -166,12 +176,11 @@ impl QueueStruct {
             let removed_user = queue.remove(user_queue_pos);
             match Self::remove_teller_users(removed_user, servers) {
                 Ok(_) => Ok(()),
-                Err(data) => Err(data)
+                Err(data) => Err(data),
             }
         } else {
             Err("User Doesn't Exist in the main Queue")
         }
-
     }
 
     /*Timer Events*/
@@ -195,25 +204,22 @@ impl QueueStruct {
         prev_remaining_time: f64,
         user_server_pos: usize,
     ) -> f64 {
-         self.set_up_timer(
-            prev_remaining_time,
-            service_time,
-            user_server_pos,
-        )
-
+        self.set_up_timer(prev_remaining_time, service_time, user_server_pos)
     }
 
     /*Live Changes*/
     pub fn queue_change(&mut self, servers: &mut Servers) -> Result<(), &str> {
-       for (index, user) in self.queue.iter_mut().enumerate() {
-           user.queue_pos = index;
-           let user_query = UserQuery { national_id: user.national_id.clone() };
-           match Self::assign_users(user_query, index, servers) {
-               Ok(_) => {}
-               Err(data) => {return Err(data)}
-           }
-       };
-       Ok(())
+        for (index, user) in self.queue.iter_mut().enumerate() {
+            user.queue_pos = index;
+            let user_query = UserQuery {
+                national_id: user.national_id.clone(),
+            };
+            match Self::assign_users(user_query, index, servers) {
+                Ok(_) => {}
+                Err(data) => return Err(data),
+            }
+        }
+        Ok(())
     }
 
     /*Setting up user to teller in queue*/

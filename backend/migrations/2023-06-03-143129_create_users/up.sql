@@ -2,7 +2,7 @@ CREATE TABLE Users (
    user_id INTEGER PRIMARY KEY AUTO_INCREMENT,
    name TEXT NOT NULL,
    account_number VARCHAR(255) NOT NULL,
-   national_id VARCHAR(15) UNIQUE NOT NULL,
+   national_id VARCHAR(16) UNIQUE NOT NULL,
    password VARCHAR(16) NOT NULL
 );
 

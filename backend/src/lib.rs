@@ -7,6 +7,7 @@ pub mod interface;
 #[cfg(test)]
 pub mod tests;
 
+#[derive(Default)]
 pub struct Servers {
     pub server_1: Vec<UserQuery>,
     pub server_2: Vec<UserQuery>,
@@ -14,16 +15,7 @@ pub struct Servers {
     pub server_4: Vec<UserQuery>,
 }
 
-impl Default for Servers {
-    fn default() -> Self {
-        Self {
-            server_1: vec![],
-            server_2: vec![],
-            server_3: vec![],
-            server_4: vec![],
-        }
-    }
-}
+
 
 impl Servers {
     // pub fn new() -> Self {}
@@ -77,7 +69,7 @@ impl Servers {
         if let Some(index) = user.teller_queue_pos {
             match server_index {
                 1 => {
-                    if self.server_1.len() > 0 {
+                    if self.server_1.is_empty() {
                         self.server_1.remove(index);
                         Ok(self)
                     } else {
@@ -85,7 +77,7 @@ impl Servers {
                     }
                 }
                 2 => {
-                    if self.server_2.len() > 0 {
+                    if self.server_2.is_empty() {
                         self.server_2.remove(index);
                         Ok(self)
                     } else {
@@ -93,7 +85,7 @@ impl Servers {
                     }
                 }
                 3 => {
-                    if self.server_3.len() > 0 {
+                    if self.server_3.is_empty() {
                         self.server_3.remove(index);
                         Ok(self)
                     } else {
@@ -101,7 +93,7 @@ impl Servers {
                     }
                 }
                 0 => {
-                    if self.server_4.len() > 0 {
+                    if self.server_4.is_empty() {
                         self.server_4.remove(index);
                         Ok(self)
                     } else {

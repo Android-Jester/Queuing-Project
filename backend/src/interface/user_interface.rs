@@ -1,10 +1,11 @@
 use crate::data_source::queuing_techniques::QueueStruct;
+use crate::interface::teller_interface::TellersQueue;
 use crate::{data::models::*, data_source::db_actions::list_users_db};
 use crate::{data_source, Servers};
 use actix_web::{get, guard, post, web, HttpResponse, Responder};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::{Mutex};
 
 pub fn user_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -17,8 +18,7 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/")
                     .guard(guard::Header("content-type", "text/event-stream"))
-                    .guard(guard::Header("cache-control", "no-cache"))
-                    .service(show_user_waiting_time),
+                    .guard(guard::Header("cache-control", "no-cache")), // .service(show_user_waiting_time),
             ),
     );
 }
@@ -43,20 +43,29 @@ pub async fn login_guest_request(login_data: web::Json<Guest>) -> impl Responder
     validate(guest_data)
 }
 
+// #[derive(Deserialize, Serialize)]
+// pub struct JoinedUserOutput {
+//     timer: f64,
+// }
+
 #[post("/join")]
 pub async fn user_join_queue(
     user: web::Json<UserQueryData>,
     main_queue: web::Data<Mutex<QueueStruct>>,
+    teller_queues: web::Data<Mutex<TellersQueue>>,
     server_queues: web::Data<Mutex<Servers>>,
 ) -> impl Responder {
-    let queue_data = &main_queue.into_inner();
-    let mut queue = queue_data.lock().unwrap();
-    let server = &server_queues.into_inner();
-    let mut mutex_server = server.lock().unwrap();
+    let mut queue = main_queue.lock().unwrap();
+    let mut server = server_queues.lock().unwrap();
     let user_query = data_source::db_actions::find_user(user.national_id.clone()).unwrap();
-    match queue.add_item(user_query, &mut mutex_server) {
+    let teller_queue = &teller_queues.lock().unwrap();
+
+    match queue.add_item(user_query, teller_queue, &mut server) {
         Ok(added_user) => {
-            info!("User: {} Joined Queue", added_user.national_id);
+            info!(
+                "User: {} Joined Queue {:?}",
+                added_user.national_id, queue.queue
+            );
             HttpResponse::Ok().json(added_user)
         }
         Err(e) => {
@@ -72,10 +81,8 @@ pub async fn user_leave_queue(
     servers_data: web::Data<Mutex<Servers>>,
 ) -> impl Responder {
     let user = user_data.into_inner();
-    let server_data = servers_data.into_inner();
-    let mut servers = server_data.lock().unwrap();
-    let queue_mutex_data = &queue_data.into_inner();
-    let mut queue = queue_mutex_data.lock().unwrap();
+    let mut servers = servers_data.lock().unwrap();
+    let mut queue = queue_data.lock().unwrap();
     match queue.remove_item(user.queue_pos, &mut servers) {
         Ok(_) => {
             info!("User: {} is leaving", user.national_id);
@@ -91,7 +98,7 @@ pub async fn user_leave_queue(
 #[derive(Deserialize, Debug, Clone)]
 struct QueryParams {
     queue_pos: usize,
-    teller_id: String,
+    assigned_teller: usize,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -101,35 +108,16 @@ struct UserInfo {
     user_teller_pos: usize,
 }
 
-#[get("/time")]
-async fn show_user_waiting_time(
-    user_query: web::Query<QueryParams>,
-    queue_data: web::Data<Mutex<QueueStruct>>,
-) -> impl Responder {
-    let user = user_query.into_inner();
-    let teller = data_source::db_actions::find_teller(user.clone().teller_id);
+pub fn show_user_waiting_time(teller_id: String, queue: &mut QueueStruct, user_pos: usize) -> f64 {
+    let teller = data_source::db_actions::find_teller(teller_id);
     match teller {
         Ok(teller_data) => {
-            let timer = queue_data.lock().unwrap().get_waiting_time(
-                teller_data.service_time as f64,
-                0.0,
-                user.queue_pos,
-            );
-            info!("User Detail Sent");
-            web::Json(UserInfo {
-                teller_loc: 1,
-                user_teller_pos: 2,
-                user_time: timer,
-            })
-            // HttpResponse::Ok().body("")
+            let timer = queue.get_waiting_time(teller_data.service_time as f64, 0.0, user_pos);
+            timer
         }
         Err(_) => {
             error!("User Detail unavailable");
-            web::Json(UserInfo {
-                teller_loc: 1,
-                user_teller_pos: 2,
-                user_time: 0.0,
-            })
+            0.0
         }
     }
 }

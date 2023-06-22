@@ -1,4 +1,4 @@
-use crate::data::models;
+use crate::data::models::{self, TellerQuery};
 use crate::data::models::{Teller, TellerLogin, Transaction, UserInsert, UserQuery};
 use crate::data::schema::{Guests, Tellers, Transactions, Users};
 use diesel::prelude::*;
@@ -103,22 +103,22 @@ pub fn login_guest(guest: models::Guest) -> Result<String, &'static str> {
             .execute(conn)
     });
     match res {
-        Ok(_) => Ok(guest.name),
+        Ok(_) => Ok(guest.national_id),
         Err(_) => Err("Guest cannot be logged in"),
     }
 }
-pub fn login_teller(teller_login: TellerLogin) -> Result<String, &'static str> {
+pub fn login_teller(teller_login: TellerLogin) -> Result<(String, i32), &'static str> {
     let conn = &mut establish_conn();
     let transactions_data = conn.transaction(|connection| {
         Tellers::dsl::Tellers
-            .select(TellerLogin::as_select())
+            .select(TellerQuery::as_select())
             .find(teller_login.server_id)
             .first(connection)
     });
     match transactions_data {
         Ok(teller) => {
             if teller.password.eq(&teller_login.password) {
-                Ok(teller.server_id)
+                Ok((teller.server_id, teller.server_station))
             } else {
                 Err("Unable to login Teller")
             }
@@ -137,7 +137,21 @@ pub fn find_teller(teller_id: String) -> Result<Teller, &'static str> {
     });
     match transactions_data {
         Ok(teller) => Ok(teller),
-        Err(_) => Err("Unable to Find Teller"),
+        Err(_) => Err("Unable to Find Telle"),
+    }
+}
+
+pub fn find_teller_id(teller_id: i32) -> Result<Teller, &'static str> {
+    let conn = &mut establish_conn();
+    let transactions_data = conn.transaction(|connection| {
+        Tellers::dsl::Tellers
+            .select(Teller::as_select())
+            .filter(Tellers::server_station.eq(teller_id))
+            .first(connection)
+    });
+    match transactions_data {
+        Ok(teller) => Ok(teller),
+        Err(_) => Err("Unable to Find Telle"),
     }
 }
 

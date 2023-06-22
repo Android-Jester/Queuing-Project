@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 
 use chrono::NaiveDateTime;
 use diesel::{Insertable, Queryable, Selectable};
@@ -30,12 +30,13 @@ pub struct UserQuery {
     pub national_id: String,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UserQueuePos {
     pub national_id: String,
     pub queue_pos: usize,
     pub teller_queue_pos: Option<usize>,
     pub assigned_teller: Option<usize>,
+    pub timer: f64,
 }
 
 #[derive(Deserialize, Clone)]
@@ -145,12 +146,28 @@ pub struct TellerInsert {
     pub password: String,
 }
 
-#[derive(Selectable, Queryable, Deserialize, Serialize)]
+#[derive(Selectable, Queryable, Deserialize, Serialize, Clone)]
 #[diesel(table_name = crate::data::schema::Tellers)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct TellerLogin {
     pub server_id: String,
     pub password: String,
+}
+
+#[derive(Selectable, Queryable, Deserialize, Serialize, Clone)]
+#[diesel(table_name = crate::data::schema::Tellers)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct TellerQuery {
+    pub server_id: String,
+    pub server_station: i32,
+    pub password: String,
+}
+#[derive(Selectable, Queryable, Deserialize, Serialize, Clone, Debug)]
+#[diesel(table_name = crate::data::schema::Tellers)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+pub struct TellerQueueQuery {
+        pub server_id: String,
+        pub server_station: i32,        
 }
 
 impl Teller {
@@ -161,7 +178,7 @@ impl Teller {
 }
 
 impl Display for Teller {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "{}:{}:{}:{}",
             self.server_id, self.server_station, self.service_time, self.active,
