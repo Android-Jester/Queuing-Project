@@ -1,16 +1,17 @@
+use crate::data::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::data::{models::*, SERVER_COUNT};
+
 #[derive(Deserialize, Debug)]
 pub struct TellerQueueStruct {
-   pub teller_position: usize,
+    pub teller_position: usize,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ServerTeller {
-   pub name: String,
-   pub account_number: String,
-   pub action: String,
-   pub national_id: String,
+    pub name: String,
+    pub account_number: String,
+    pub action: String,
+    pub national_id: String,
 }
 
 #[derive(Debug)]

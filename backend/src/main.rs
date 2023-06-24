@@ -1,13 +1,13 @@
 use actix_cors::Cors;
-use actix_web::middleware;
-use actix_web::{http::KeepAlive, web, App, HttpServer};
-use queuing_server::interface::teller_interface::*;
-use queuing_server::interface::user_interface::*;
+use actix_web::{http::KeepAlive, middleware, web, App, HttpServer};
+use queuing_server::data_source::prelude::*;
+use queuing_server::interface::prelude::*;
 use queuing_server::Servers;
 use std::net::Ipv4Addr;
 use std::sync::Mutex;
 
 /// Main File for runnning server
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -16,15 +16,14 @@ async fn main() -> std::io::Result<()> {
         Ipv4Addr::UNSPECIFIED
     );
 
-    let queue_struct = web::Data::new(Mutex::new(
-        queuing_server::data_source::queuing_techniques::QueueStruct::default(),
-    ));
-    let user_servers = web::Data::new(Mutex::new(Servers::default()));
-    let teller_queues = web::Data::new(Mutex::new(TellersQueue::default()));
-
+    let queue_struct: web::Data<Mutex<QueueStruct>> =
+        web::Data::new(Mutex::new(QueueStruct::default()));
+    let user_servers: web::Data<Mutex<Servers>> = web::Data::new(Mutex::new(Servers::default()));
+    let teller_queues: web::Data<Mutex<TellersQueue>> =
+        web::Data::new(Mutex::new(TellersQueue::default()));
 
     HttpServer::new(move || {
-        let cors = Cors::default()
+        let cors: Cors = Cors::default()
             .supports_credentials()
             .allow_any_header()
             .allow_any_method()

@@ -1,4 +1,4 @@
-use crate::data::SERVER_COUNT;
+use crate::data::prelude::*;
 use crate::data_source::queuing_techniques::get_all_service_times;
 use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;

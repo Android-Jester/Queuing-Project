@@ -1,14 +1,8 @@
-use std::sync::Mutex;
+use crate::data_source::prelude::*;
 use crate::*;
-use crate::{data::models::*, data_source::{db_actions::*, queuing_techniques::*}};
-use actix_web::{web, HttpResponse, Responder, post, get};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use log::info;
-// use crate::data_source::queuing_techniques::QueueStruct;
-// use crate::{data_source, Servers};
-// use actix_web::{post, web, HttpResponse, Responder, get};
-// use serde::{Deserialize, Serialize};
-
-
+use std::sync::Mutex;
 
 #[post("/add_transaction")]
 pub async fn record_transaction(transaction: web::Json<Transaction>) -> impl Responder {
@@ -29,15 +23,16 @@ pub async fn change_teller_status(
 }
 
 #[post("/logout")]
-pub async fn logout_teller(teller_index: web::Query<usize>, tellers: web::Data<Mutex<TellersQueue>>) -> impl Responder {
+pub async fn logout_teller(
+    teller_index: web::Query<usize>,
+    tellers: web::Data<Mutex<TellersQueue>>,
+) -> impl Responder {
     match tellers.lock() {
         Ok(mut teller) => {
             teller.remove_teller(teller_index.into_inner());
             HttpResponse::Ok().body("left the queue".to_string())
         }
-        Err(_) => {
-            HttpResponse::Conflict().body("Teller Not Found")
-        }
+        Err(_) => HttpResponse::Conflict().body("Teller Not Found"),
     }
 }
 
@@ -57,28 +52,25 @@ pub async fn remove_user(
     }
 }
 
-
-
-
 #[get("/queue")]
-pub async fn user_queues(user_queue_server: web::Data<Mutex<Servers>>, /*main_queue: web::Data<Mutex<QueueStruct>>, */ teller_pos: web::Query<TellerQueueStruct>) -> impl Responder {
+pub async fn user_queues(
+    user_queue_server: web::Data<Mutex<Servers>>,
+    /*main_queue: web::Data<Mutex<QueueStruct>>, */
+    teller_pos: web::Query<TellerQueueStruct>,
+) -> impl Responder {
     if let Ok(queue) = user_queue_server.lock() {
-    HttpResponse::Ok().json(queue.show_users(teller_pos.teller_position))
-    }
-    else {
+        HttpResponse::Ok().json(queue.show_users(teller_pos.teller_position))
+    } else {
         HttpResponse::NotFound().body("No Such Data")
     }
 }
-
-
-
 
 #[post("/login")]
 pub async fn login_teller_request(
     login_data: web::Json<TellerLogin>,
     teller_queues: web::Data<Mutex<TellersQueue>>,
 ) -> impl Responder {
-    let teller_data = data_source::db_actions::login_teller(login_data.into_inner());
+    let teller_data = login_teller(login_data.into_inner());
 
     match teller_data {
         Ok((teller_id, teller_loc)) => {
@@ -95,4 +87,3 @@ pub async fn login_teller_request(
         Err(e) => HttpResponse::NotFound().json(e),
     }
 }
-

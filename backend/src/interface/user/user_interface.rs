@@ -1,13 +1,8 @@
+use crate::{data::prelude::*, data_source::prelude::*, *};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use std::sync::Mutex;
-use actix_web::{web, get, post, Responder, HttpResponse};
-use crate::{data_source::{db_actions::*, queuing_techniques::*}, data::models::*, *};
-// use crate::data_source::queuing_techniques::QueueStruct;
-// use crate::interface::teller::teller_queue::TellersQueue;
-// use crate::{data::models::*, data_source::db_actions::list_users_db};
-// use crate::{data_source, Servers};
-// use actix_web::{get, /*guard,*/ post, web, HttpResponse, Responder};
-use log::{error, info};
 
+use log::{error, info};
 
 #[get("/")]
 pub async fn list_users() -> impl Responder {
@@ -29,7 +24,6 @@ pub async fn login_guest_request(login_data: web::Json<Guest>) -> impl Responder
     validate(guest_data)
 }
 
-
 #[post("/join")]
 pub async fn user_join_queue(
     user: web::Json<UserQueryData>,
@@ -39,7 +33,7 @@ pub async fn user_join_queue(
 ) -> impl Responder {
     let mut queue = main_queue.lock().unwrap();
     let mut server = server_queues.lock().unwrap();
-    let user_query = data_source::db_actions::find_user(user.national_id.clone()).unwrap();
+    let user_query = find_user(user.national_id.clone()).unwrap();
     let teller_queue = &teller_queues.lock().unwrap();
     let new_struc = JoinedUserOutput {
         user_query,
@@ -79,7 +73,6 @@ pub async fn user_leave_queue(
         }
     }
 }
-
 
 fn validate(data_source: Result<String, &str>) -> impl Responder {
     match data_source {
