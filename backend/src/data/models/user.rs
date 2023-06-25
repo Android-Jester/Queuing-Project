@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserQuery {
@@ -10,22 +10,44 @@ pub struct UserQuery {
     pub national_id: String,
 }
 
-// #[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug)]
-// #[diesel(table_name = crate::data::schema::Users)]
-// #[diesel(check_for_backend(diesel::mysql::Mysql))]
-// pub struct UserServerQuery {
-
-//     pub national_id: String,
-// }
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct UserQueuePos {
     pub national_id: String,
     pub action: String,
-    pub queue_pos: usize,
-    pub teller_queue_pos: Option<usize>,
-    pub assigned_teller: Option<usize>,
+    pub pos: usize,
+    pub server_pos: Option<usize>,
+    pub service_loc: Option<usize>,
     pub timer: f64,
+}
+
+impl UserQueuePos {
+    pub fn new(
+        national_id: String,
+        action: String,
+        pos: usize,
+        server_pos: usize,
+        service_loc: usize,
+        timer: f64,
+    ) -> Self {
+        Self {
+            national_id,
+            action,
+            pos,
+            server_pos: Some(server_pos),
+            service_loc: Some(service_loc),
+            timer,
+        }
+    }
+
+    pub fn change_queue_pos(&mut self, pos: usize) {
+        self.pos = pos;
+    }
+    pub fn change_assigned_teller(&mut self, new_teller: usize) {
+        self.service_loc = Some(new_teller);
+    }
+    pub fn change_teller_queue_pos(&mut self, new_server_pos: usize) {
+        self.server_pos = Some(new_server_pos);
+    }
 }
 
 #[derive(Deserialize, Clone)]

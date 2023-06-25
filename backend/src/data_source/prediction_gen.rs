@@ -1,5 +1,5 @@
 use crate::data::prelude::*;
-use crate::data_source::queuing_techniques::get_all_service_times;
+use crate::prelude::*;
 use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};

@@ -1,8 +1,6 @@
 use actix_cors::Cors;
-use actix_web::{http::KeepAlive, middleware, web, App, HttpServer};
-use queuing_server::data_source::prelude::*;
-use queuing_server::interface::prelude::*;
-use queuing_server::Servers;
+use actix_web::{http::KeepAlive, *};
+use queuing_server::prelude::*;
 use std::net::Ipv4Addr;
 use std::sync::Mutex;
 
@@ -18,10 +16,8 @@ async fn main() -> std::io::Result<()> {
 
     let queue_struct: web::Data<Mutex<QueueStruct>> =
         web::Data::new(Mutex::new(QueueStruct::default()));
-    let user_servers: web::Data<Mutex<Servers>> = web::Data::new(Mutex::new(Servers::default()));
-    let teller_queues: web::Data<Mutex<TellersQueue>> =
+    let user_servers: web::Data<Mutex<TellersQueue>> =
         web::Data::new(Mutex::new(TellersQueue::default()));
-
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .supports_credentials()
@@ -32,7 +28,6 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(middleware::Logger::default())
             .app_data(queue_struct.clone())
-            .app_data(teller_queues.clone())
             .app_data(user_servers.clone())
             .service(list_users)
             /*Teller Actions*/

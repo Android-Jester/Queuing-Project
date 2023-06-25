@@ -1,68 +1,54 @@
-use crate::{data::prelude::*, data_source::prelude::*, *};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use crate::prelude::*;
+use actix_web::*;
 use std::sync::Mutex;
 
 use log::{error, info};
 
-#[get("/")]
-pub async fn list_users() -> impl Responder {
-    let users = list_users_db().unwrap();
-    info!("List all users");
-    HttpResponse::Ok().json(users)
-}
-
-/*User Space*/
+/// Allows registered users to use the queuing service
 #[post("/login")]
-pub async fn login_user_request(login_data: web::Json<UserLogin>) -> impl Responder {
+pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
     let user_data = login_user(login_data.into_inner());
     validate(user_data)
 }
 
+/// Allows guests to use the service
 #[post("/guest/login")]
-pub async fn login_guest_request(login_data: web::Json<Guest>) -> impl Responder {
+pub async fn guest_login(login_data: web::Json<Guest>) -> impl Responder {
     let guest_data = login_guest(login_data.into_inner());
     validate(guest_data)
 }
 
+/// Users and guests can join the main queue and assigned tellers
 #[post("/join")]
-pub async fn user_join_queue(
+pub async fn join_queue(
     user: web::Json<UserQueryData>,
-    main_queue: web::Data<Mutex<QueueStruct>>,
-    teller_queues: web::Data<Mutex<TellersQueue>>,
-    server_queues: web::Data<Mutex<Servers>>,
+    queue: web::Data<Mutex<QueueStruct>>,
+    servers: web::Data<Mutex<TellersQueue>>,
 ) -> impl Responder {
-    let mut queue = main_queue.lock().unwrap();
-    let mut server = server_queues.lock().unwrap();
+    let mut queue = queue.lock().unwrap();
+    let mut server = servers.lock().unwrap();
     let user_query = find_user(user.national_id.clone()).unwrap();
-    let teller_queue = &teller_queues.lock().unwrap();
     let new_struc = JoinedUserOutput {
         user_query,
         action: user.action.clone(),
     };
-    match queue.add_item(new_struc, teller_queue, &mut server) {
-        Ok(added_user) => {
-            info!(
-                "User: {} Joined Queue {:?}",
-                added_user.national_id, queue.queue
-            );
-            HttpResponse::Ok().json(added_user)
-        }
-        Err(e) => {
-            error!("User cannot Join Queue");
-            HttpResponse::NotFound().body(e.to_string())
-        }
+    match queue.add_user(new_struc, &mut server) {
+        Ok(added_user) => HttpResponse::Ok().json(added_user),
+        Err(e) => HttpResponse::NotFound().body(e.to_string()),
     }
 }
+
+/// Removes user from the queue and resets the queue
 #[post("/leave")]
-pub async fn user_leave_queue(
-    user_data: web::Json<UserQueuePos>,
-    queue_data: web::Data<Mutex<QueueStruct>>,
-    servers_data: web::Data<Mutex<Servers>>,
+pub async fn leave_queue(
+    user: web::Json<UserQueuePos>,
+    queue: web::Data<Mutex<QueueStruct>>,
+    servers: web::Data<Mutex<TellersQueue>>,
 ) -> impl Responder {
-    let user = user_data.into_inner();
-    let mut servers = servers_data.lock().unwrap();
-    let mut queue = queue_data.lock().unwrap();
-    match queue.remove_item(user.queue_pos, &mut servers) {
+    let user = user.into_inner();
+    let mut servers = servers.lock().unwrap();
+    let mut queue = queue.lock().unwrap();
+    match queue.remove_user(user.pos, &mut servers) {
         Ok(_) => {
             info!("User: {} is leaving", user.national_id);
             HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))

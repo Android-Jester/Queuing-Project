@@ -2,6 +2,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+use crate::prelude::JoinedUserOutput;
+
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = crate::data::schema::Tellers)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
@@ -39,12 +41,27 @@ pub struct TellerQuery {
     pub server_station: i32,
     pub password: String,
 }
-#[derive(Selectable, Queryable, Deserialize, Serialize, Clone, Debug)]
+#[derive(Selectable, Queryable, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 #[diesel(table_name = crate::data::schema::Tellers)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct TellerQueueQuery {
     pub server_id: String,
     pub server_station: i32,
+}
+
+#[derive(PartialEq, Eq)]
+pub struct ServerQueue {
+    pub teller: TellerQueueQuery,
+    pub users: Vec<JoinedUserOutput>,
+}
+
+impl ServerQueue {
+    pub fn new(teller: TellerQueueQuery) -> Self {
+        Self {
+            teller,
+            users: vec![],
+        }
+    }
 }
 
 impl Teller {

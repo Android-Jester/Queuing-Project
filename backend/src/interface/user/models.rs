@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::data::prelude::*;
 use crate::data_source::prelude::*;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct JoinedUserOutput {
     pub user_query: UserQuery,
     pub action: String,
