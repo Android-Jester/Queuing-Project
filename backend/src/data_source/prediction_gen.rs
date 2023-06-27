@@ -11,6 +11,7 @@ fn classify_data(complete_data: &(Vec<[f64; 4]>, Vec<u8>)) -> (Vec<[f64; 4]>, Ve
     (data.to_owned(), targets.to_owned())
 }
 
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 /// Training the model
 fn train_model(
     max_features: usize,

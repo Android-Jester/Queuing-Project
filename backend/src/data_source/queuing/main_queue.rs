@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::prelude::*;
 #[derive(Debug)]
 pub struct QueueStruct {
@@ -14,6 +16,10 @@ impl Default for QueueStruct {
 
 impl QueueStruct {
     /*Main Queue Events*/
+
+    
+
+
     pub fn add_user<'a>(
         &'a mut self,
         user: JoinedUserOutput,
@@ -21,16 +27,18 @@ impl QueueStruct {
     ) -> Result<UserQueuePos, &str> {
         match self.queue.len() < CUSTOMER_COUNT {
             true => {
-                let pos: usize = self.queue.len() + 1 % SERVER_COUNT;
+                let pos: usize = self.queue.len() % servers.tellers_num();
                 match servers.add_customer(pos, user.clone()) {
                     Ok((teller_pos, user_pos)) => match servers.search_teller(teller_pos) {
                         Ok(server) => {
                             let timer = show_user_waiting_time(
+                                0.0,
                                 server.teller.server_id.clone(),
                                 self,
                                 user_pos,
                             );
                             let user_pos: UserQueuePos = UserQueuePos::new(
+                                user.user_query.name,
                                 user.user_query.national_id.clone(),
                                 user.action,
                                 self.queue.len() + 1,
@@ -38,8 +46,9 @@ impl QueueStruct {
                                 teller_pos,
                                 timer,
                             );
-
+                            
                             self.queue.push(user_pos.clone());
+                            info!("Queue: {:?}", self.queue);
                             Ok(user_pos)
                         }
                         Err(d) => Err(d),
@@ -61,19 +70,14 @@ impl QueueStruct {
                 match servers.remove_customer(user) {
                     Ok(_) => {
                         for (user_pos, user_data) in self.queue.iter_mut().enumerate() {
-                            let user_queue_item = match find_user(user_data.national_id.clone()) {
-                                Ok(user_query) => Ok(JoinedUserOutput {
-                                    user_query,
-                                    action: user_data.action.clone(),
-                                }),
-                                Err(d) => Err(d),
-                            };
-                            user_data.change_queue_pos(user_pos);
-                            user_data.change_assigned_teller(user_pos % servers.tellers_num());
-                            let _ = servers.add_customer(
-                                user_pos % servers.tellers_num(),
-                                user_queue_item.unwrap(),
-                            );
+                             if let Ok(user_query) = find_user(user_data.national_id.clone()) {
+                                    user_data.change_queue_pos(user_pos);
+                                    user_data.change_assigned_teller(user_pos % servers.tellers_num());
+                                    let _ = servers.add_customer(
+                                        user_pos % servers.tellers_num(),
+                                        JoinedUserOutput::new(user_query, user_data.action.clone())
+                                    );
+                            }; 
                         }
                         Ok(())
                     }
@@ -98,14 +102,7 @@ impl QueueStruct {
         }
         timer
     }
-    pub fn get_waiting_time(
-        &mut self,
-        service_time: f64,
-        prev_remaining_time: f64,
-        user_server_pos: usize,
-    ) -> f64 {
-        self.set_up_timer(prev_remaining_time, service_time, user_server_pos)
-    }
+ 
 
     /*Live Changes*/
     pub fn queue_change(&mut self) {

@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
@@ -13,18 +14,9 @@ pub struct ServerTeller {
     pub action: String,
     pub national_id: String,
 }
-
-// #[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct TellersQueue {
-    pub tellers: Vec<Option<ServerQueue>>,
-}
-
-impl Default for TellersQueue {
-    fn default() -> Self {
-        Self {
-            tellers: Vec::with_capacity(SERVER_COUNT),
-        }
-    }
+    tellers: Vec<Option<ServerQueue>>,
 }
 
 impl TellersQueue {
@@ -37,13 +29,13 @@ impl TellersQueue {
                 Some(queue) => queue.users = vec![],
                 None => {}
             }
-            // teller = &mut None;
         }
     }
     pub fn add_teller(&mut self, teller: TellerQueueQuery) -> Result<(), &str> {
         match self.tellers_num() < SERVER_COUNT {
             true => {
                 self.tellers.push(Some(ServerQueue::new(teller)));
+                info!("{:?}", self.tellers);
                 Ok(())
             }
             false => Err("Server List full"),
@@ -58,7 +50,10 @@ impl TellersQueue {
     }
     pub fn search_teller(&self, station: usize) -> Result<&ServerQueue, &str> {
         if station < self.tellers.len() {
-            Ok(self.tellers[station].as_ref().unwrap())
+            match self.tellers[station].as_ref() {
+                Some(teller) => Ok(teller),
+                None => Err("Unable to find teller"),
+            }
         } else {
             Err("No Available Teller")
         }
@@ -68,8 +63,10 @@ impl TellersQueue {
         server_station: usize,
         user: JoinedUserOutput,
     ) -> Result<(usize, usize), &str> {
+        info!("Server Station: {}", server_station);
+        info!("Teller 1: {:?}", self.tellers[0]);
         match &mut self.tellers[server_station] {
-            Some(teller) => match teller.users.len() == usize::MAX {
+            Some(teller) => match teller.users.len() != usize::MAX {
                 true => {
                     teller.users.push(user);
                     // Teller positon, User Position
@@ -116,25 +113,7 @@ impl TellersQueue {
             None => vec![],
         }
     }
-
-    // pub fn replace_customer(&mut self, user: JoinedUserOutput) {
-    //     match &mut self.tellers[server_station] {
-    //         Some(teller) => {}
-    //         None => {}
-    //     }
-    //     Some(teller) => match teller.users.len() == usize::MAX {
-    //         true => {
-    //             teller.users.push(user);
-    //             // Teller positon, User Position
-    //             Ok((server_station, teller.users.len()))
-    //         }
-    //         false => Err("Unable to add customer"),
-    //     },
-    //     None => Err("No Teller Available"),
-    // }
 }
-// }
-
 // #[derive(Default)]
 // pub struct Servers {
 //     pub server_1: Vec<JoinedUserOutput>,
@@ -165,30 +144,30 @@ impl TellersQueue {
 //             3 => Self::add_item_server(&mut self.server_3, user),
 //             0 => Self::add_item_server(&mut self.server_4, user),
 //             _ => Err("Server Does not exist"),
-//             // 2 => {
-//             //     if self.server_2.len() < usize::MAX {
-//             //         self.server_2.push(user);
-//             //         Ok((2, self.server_2.len()))
-//             //     } else {
-//             //         Err("Unable to add customer")
-//             //     }
-//             // }
-//             // 3 => {
-//             //     if self.server_3.len() < usize::MAX {
-//             //         self.server_3.push(user);
-//             //         Ok((3, self.server_3.len()))
-//             //     } else {
-//             //         Err("Unable to add customer")
-//             //     }
-//             // }
-//             // 0 => {
-//             //     if self.server_4.len() < usize::MAX {
-//             //         self.server_4.push(user);
-//             //         Ok((4, self.server_4.len()))
-//             //     } else {
-//             //         Err("Unable to add customer")
-//             //     }
-//             // }
+// 2 => {
+//     if self.server_2.len() < usize::MAX {
+//         self.server_2.push(user);
+//         Ok((2, self.server_2.len()))
+//     } else {
+//         Err("Unable to add customer")
+//     }
+// }
+// 3 => {
+//     if self.server_3.len() < usize::MAX {
+//         self.server_3.push(user);
+//         Ok((3, self.server_3.len()))
+//     } else {
+//         Err("Unable to add customer")
+//     }
+// }
+// 0 => {
+//     if self.server_4.len() < usize::MAX {
+//         self.server_4.push(user);
+//         Ok((4, self.server_4.len()))
+//     } else {
+//         Err("Unable to add customer")
+//     }
+// }
 //         }
 //     }
 
@@ -242,57 +221,57 @@ impl TellersQueue {
 //         3 => self.show_item(&self.server_3, teller_loc),
 //         0 => self.show_item(&self.server_4, teller_loc),
 //         _ => self.show_item(&self.server_1, teller_loc),
-//         // _ => {
-//         //     let mut teller_view: Vec<ServerTeller> = Vec::new();
-//         //     for user in self.server_1.clone() {
-//         //         let server_tel = ServerTeller {
-//         //             national_id: user.user_query.national_id,
-//         //             account_number: user.user_query.account_number,
-//         //             action: user.action,
-//         //             name: user.user_query.name,
-//         //         };
-//         //         teller_view.push(server_tel);
-//         //     }
-//         //     teller_view
-//         // } // 2 => {
-//         //     let mut teller_view: Vec<ServerTeller> = Vec::new();
-//         //     for user in self.server_2.clone() {
-//         //         let server_tel = ServerTeller {
-//         //             national_id: user.user_query.national_id,
-//         //             account_number: user.user_query.account_number,
-//         //             action: user.action,
-//         //             name: user.user_query.name,
-//         //         };
-//         //         teller_view.push(server_tel);
-//         //     }
-//         //     teller_view
-//         // }
-//         // 3 => {
-//         //     let mut teller_view: Vec<ServerTeller> = Vec::new();
-//         //     for user in self.server_3.clone() {
-//         //         let server_tel: ServerTeller = ServerTeller {
-//         //             national_id: user.user_query.national_id,
-//         //             account_number: user.user_query.account_number,
-//         //             action: user.action,
-//         //             name: user.user_query.name,
-//         //         };
-//         //         teller_view.push(server_tel);
-//         //     }
-//         //     teller_view
-//         // }
-//         // 0 => {
-//         //     let mut teller_view: Vec<ServerTeller> = Vec::new();
-//         //     for user in self.server_4.clone() {
-//         //         let server_tel = ServerTeller {
-//         //             national_id: user.user_query.national_id,
-//         //             account_number: user.user_query.account_number,
-//         //             action: user.action,
-//         //             name: user.user_query.name,
-//         //         };
-//         //         teller_view.push(server_tel);
-//         //     }
-//         //     teller_view
-//         // }
+// _ => {
+//     let mut teller_view: Vec<ServerTeller> = Vec::new();
+//     for user in self.server_1.clone() {
+//         let server_tel = ServerTeller {
+//             national_id: user.user_query.national_id,
+//             account_number: user.user_query.account_number,
+//             action: user.action,
+//             name: user.user_query.name,
+//         };
+//         teller_view.push(server_tel);
+//     }
+//     teller_view
+// } // 2 => {
+//     let mut teller_view: Vec<ServerTeller> = Vec::new();
+//     for user in self.server_2.clone() {
+//         let server_tel = ServerTeller {
+//             national_id: user.user_query.national_id,
+//             account_number: user.user_query.account_number,
+//             action: user.action,
+//             name: user.user_query.name,
+//         };
+//         teller_view.push(server_tel);
+//     }
+//     teller_view
+// }
+// 3 => {
+//     let mut teller_view: Vec<ServerTeller> = Vec::new();
+//     for user in self.server_3.clone() {
+//         let server_tel: ServerTeller = ServerTeller {
+//             national_id: user.user_query.national_id,
+//             account_number: user.user_query.account_number,
+//             action: user.action,
+//             name: user.user_query.name,
+//         };
+//         teller_view.push(server_tel);
+//     }
+//     teller_view
+// }
+// 0 => {
+//     let mut teller_view: Vec<ServerTeller> = Vec::new();
+//     for user in self.server_4.clone() {
+//         let server_tel = ServerTeller {
+//             national_id: user.user_query.national_id,
+//             account_number: user.user_query.account_number,
+//             action: user.action,
+//             name: user.user_query.name,
+//         };
+//         teller_view.push(server_tel);
+//     }
+//     teller_view
+// }
 //     }
 // }
 // }

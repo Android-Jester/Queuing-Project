@@ -18,7 +18,9 @@ pub mod prelude {
 
     #[get("/")]
     pub async fn list_users() -> impl Responder {
-        let users = list_users_db().unwrap();
-        HttpResponse::Ok().json(users)
+        match list_users_db() {
+            Ok(users) => HttpResponse::Ok().json(users),
+            Err(err) => HttpResponse::BadRequest().body(err),
+        }
     }
 }

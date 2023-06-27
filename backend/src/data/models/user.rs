@@ -12,6 +12,7 @@ pub struct UserQuery {
 
 #[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct UserQueuePos {
+    pub name: String,
     pub national_id: String,
     pub action: String,
     pub pos: usize,
@@ -22,6 +23,7 @@ pub struct UserQueuePos {
 
 impl UserQueuePos {
     pub fn new(
+        name: String,
         national_id: String,
         action: String,
         pos: usize,
@@ -30,6 +32,7 @@ impl UserQueuePos {
         timer: f64,
     ) -> Self {
         Self {
+            name,
             national_id,
             action,
             pos,
@@ -50,7 +53,7 @@ impl UserQueuePos {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct UserQueryData {
     pub national_id: String,
     pub action: String,
@@ -60,15 +63,17 @@ pub struct UserQueryData {
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserInsert {
+    pub name: String,
     pub account_number: String,
     pub national_id: String,
     pub password: String,
 }
 
-#[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct UserLoginQuery {
+    pub name: String,
     pub account_number: String,
     pub password: String,
     pub national_id: String,

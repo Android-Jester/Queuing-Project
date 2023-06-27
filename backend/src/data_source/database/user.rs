@@ -36,7 +36,7 @@ pub fn register_guest(insert_data: GuestInsert) -> Result<usize, Error> {
 }
 
 /*Authentication */
-pub fn login_user(login_data: UserLogin) -> Result<String, &'static str> {
+pub fn login_user(login_data: UserLogin) -> Result<UserLoginQuery, &'static str> {
     let conn = &mut establish_connection();
     let user_data = conn.transaction(|connection| {
         Users::dsl::Users
@@ -47,7 +47,7 @@ pub fn login_user(login_data: UserLogin) -> Result<String, &'static str> {
     match user_data {
         Ok(user) => {
             if user.password.eq(&login_data.password) {
-                Ok(user.national_id)
+                Ok(user)
             } else {
                 Err("Unable to login User")
             }

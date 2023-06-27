@@ -37,16 +37,27 @@ pub async fn logout_teller(
 
 #[post("/remove")]
 pub async fn remove_user(
+    user: web::Json<UserQueuePos>,
     queue_data: web::Data<Mutex<QueueStruct>>,
     server_queue: web::Data<Mutex<TellersQueue>>,
 ) -> impl Responder {
-    let mut mutex_server = server_queue.lock().unwrap();
-    let mut queue = queue_data.lock().unwrap();
-    let queue_length = queue.queue.len();
-    match queue.remove_user(queue_length, &mut mutex_server) {
-        Ok(_) => HttpResponse::Ok().body("user leaving"),
-        Err(e) => HttpResponse::Ok().body(e.to_string()),
+    // let mut mutex_server = server_queue.lock().unwrap();
+    match queue_data.lock() {
+        Ok(mut queue) => {
+            if let Ok(mut server) = server_queue.lock() {
+                if let Err(e) = queue.remove_user(user.pos, &mut server) {
+                    HttpResponse::NotFound().body(e.to_string())
+                } else {
+                    HttpResponse::Ok().body("user leaving")
+                }
+            } else {
+                HttpResponse::NotFound().body("Poison Error on /teller/remove")
+            }
+            
+        }
+        Err(err) => HttpResponse::NotFound().body(err.to_string())
     }
+    
 }
 
 #[get("/queue")]

@@ -49,7 +49,7 @@ pub struct TellerQueueQuery {
     pub server_station: i32,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct ServerQueue {
     pub teller: TellerQueueQuery,
     pub users: Vec<JoinedUserOutput>,
