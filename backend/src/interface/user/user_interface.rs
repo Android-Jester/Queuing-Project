@@ -21,8 +21,8 @@ pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
 
 /// Allows guests to use the service
 #[post("/guest/login")]
-pub async fn guest_login(login_data: web::Json<Guest>) -> impl Responder {
-    match login_guest(login_data.into_inner()) {
+pub async fn guest_login(guest: web::Json<GuestInsert>) -> impl Responder {
+    match register_guest(guest.into_inner()) {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(err) => HttpResponse::BadRequest().body(err)
     }
@@ -35,26 +35,17 @@ pub async fn join_queue(
     queue: web::Data<Mutex<QueueStruct>>,
     servers: web::Data<Mutex<TellersQueue>>,
 ) -> impl Responder {
-    match find_user(user.national_id.clone()) {
-        Ok(user_query) => {
-            match queue.lock() {
-                Ok(mut queue) => {
-                    match servers.lock() {
-                        Ok(mut server) => {
-                            match queue.add_user(JoinedUserOutput::new(user_query, user.action.clone()), &mut server) {
-                                Ok(added_user) => HttpResponse::Ok().json(added_user),
-                                Err(e) => HttpResponse::NotFound().body(e.to_string()),
-                            }
-                        },
-                        Err(err) => HttpResponse::NotFound().body(err.to_string())
-                    }
-                    
-                }, 
-                Err(err) => HttpResponse::NotFound().body(err.to_string())
-            }
-        }
-        Err(err) => HttpResponse::NotFound().body(err) 
+    match queue.lock().unwrap().add_user(
+        JoinedUserOutput::new(
+            find_user(user.national_id.clone()).unwrap(), 
+            user.action.clone()), &mut servers.lock().unwrap()
+        ) {
+        Ok(added_user) => HttpResponse::Ok().json(added_user),
+        Err(e) => HttpResponse::NotFound().body(e.to_string()),
     }
+
+
+    
 }
 
 /// Removes user from the queue and resets the queue
@@ -70,7 +61,7 @@ pub async fn leave_queue(
 
             match servers.lock() {
                 Ok(mut server) => {
-                    match queue.remove_user(user.pos, &mut server) {
+                    match queue.remove_user(user.clone(), &mut server) {
                         Ok(_) => {
                             info!("User: {} is leaving", user.national_id);
                             HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))

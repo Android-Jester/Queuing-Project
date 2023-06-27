@@ -10,7 +10,7 @@ pub mod prelude {
         conf.service(
             web::scope("/teller")
                 .service(record_transaction)
-                .service(change_teller_status)
+
                 .service(login_teller_request)
                 .service(remove_user)
                 .service(user_queues)

@@ -7,21 +7,18 @@ pub struct TellerQueueStruct {
     pub teller_position: usize,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ServerTeller {
-    pub name: String,
-    pub account_number: String,
-    pub action: String,
-    pub national_id: String,
-}
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
 pub struct TellersQueue {
-    tellers: Vec<Option<ServerQueue>>,
+    pub tellers: Vec<Option<ServerQueue>>,
 }
 
 impl TellersQueue {
     pub fn tellers_num(&self) -> usize {
-        self.tellers.len()
+        if self.tellers.is_empty() {
+            1
+        } else {
+            self.tellers.len()
+        }
     }
     fn reassign_tellers(&mut self) {
         for teller in &mut self.tellers {
@@ -61,7 +58,7 @@ impl TellersQueue {
     pub fn add_customer(
         &mut self,
         server_station: usize,
-        user: JoinedUserOutput,
+        user: UserQueuePos,
     ) -> Result<(usize, usize), &str> {
         info!("Server Station: {}", server_station);
         info!("Teller 1: {:?}", self.tellers[0]);
@@ -78,35 +75,27 @@ impl TellersQueue {
         }
     }
     pub fn remove_customer(&mut self, user: UserQueuePos) -> Result<(), &str> {
-        match user.server_pos {
+        match user.server_queue_position {
             Some(index) => match &mut self.tellers[index] {
                 Some(teller) => match teller.users.is_empty() {
-                    true => {
-                        {
+                    false => {
                             teller.users.remove(index);
                             self.reassign_tellers();
-                        };
                         Ok(())
                     }
-                    false => Err("Unable to add customer"),
+                    true => Err("Unable to add customer"),
                 },
                 None => Err("No User Found"),
             },
             None => Err("No Teller Found"),
         }
     }
-    pub fn show_users(&mut self, service_location: usize) -> Vec<ServerTeller> {
+    pub fn show_users(&mut self, service_location: usize) -> Vec<UserQueuePos> {
         match &mut self.tellers[service_location] {
             Some(teller) => {
-                let mut teller_view: Vec<ServerTeller> = Vec::new();
+                let mut teller_view: Vec<UserQueuePos> = Vec::new();
                 for user in teller.users.clone() {
-                    let server_tel = ServerTeller {
-                        national_id: user.user_query.national_id,
-                        account_number: user.user_query.account_number,
-                        action: user.action,
-                        name: user.user_query.name,
-                    };
-                    teller_view.push(server_tel);
+                    teller_view.push(user);
                 }
                 teller_view
             }

@@ -9,8 +9,8 @@ pub mod prelude {
         for i in avg_times.iter() {
             best = best.max(*i)
         }
-        let pos = avg_times.iter().position(|data| *data == best).unwrap();
-        pos as u8
+        let pos = avg_times.iter().position(|data| *data == best);
+        pos.unwrap() as u8
     }
     pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
         let transactions = list_transactions().unwrap();
@@ -21,14 +21,15 @@ pub mod prelude {
         let mut service_times: Vec<[f64; SERVER_COUNT]> = Vec::new();
         let mut best_queue: Vec<u8> = Vec::new();
         for transaction in transactions {
-            let teller_station = find_teller(transaction.server_id).expect("Unable to find teller");
-            match teller_station.server_station {
-                1 => server_1.push(transaction.duration as f64),
-                2 => server_2.push(transaction.duration as f64),
-                3 => server_3.push(transaction.duration as f64),
-                4 => server_4.push(transaction.duration as f64),
-                _ => {}
-            };
+            if let Ok(teller) =  find_teller(transaction.server_id) {
+                match teller.server_station {
+                    1 => server_1.push(transaction.duration as f64),
+                    2 => server_2.push(transaction.duration as f64),
+                    3 => server_3.push(transaction.duration as f64),
+                    4 => server_4.push(transaction.duration as f64),
+                    _ => {}
+                }
+            }
         }
 
         for data in 0..server_1.len() {

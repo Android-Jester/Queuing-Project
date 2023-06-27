@@ -1,8 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 
-use crate::prelude::JoinedUserOutput;
+use crate::prelude::UserQueuePos;
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = crate::data::schema::Tellers)]
@@ -49,10 +48,10 @@ pub struct TellerQueueQuery {
     pub server_station: i32,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Debug, Deserialize, Serialize, Clone)]
 pub struct ServerQueue {
     pub teller: TellerQueueQuery,
-    pub users: Vec<JoinedUserOutput>,
+    pub users: Vec<UserQueuePos>,
 }
 
 impl ServerQueue {
@@ -71,11 +70,3 @@ impl Teller {
     }
 }
 
-impl Display for Teller {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "{}:{}:{}:{}",
-            self.server_id, self.server_station, self.service_time, self.active,
-        ))
-    }
-}

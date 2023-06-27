@@ -1,6 +1,6 @@
-use log::info;
 
 use crate::prelude::*;
+use log::*;
 #[derive(Debug)]
 pub struct QueueStruct {
     pub queue: Vec<UserQueuePos>,
@@ -17,7 +17,18 @@ impl Default for QueueStruct {
 impl QueueStruct {
     /*Main Queue Events*/
 
-    
+    fn set_up_timer(
+        &mut self,
+        service_period: f64,
+        first_counter: Option<f64>,
+        server_queue_index: usize,
+    ) -> f64 {
+        match server_queue_index {
+            1 => 0.0,
+            2..=CUSTOMER_COUNT => (service_period * server_queue_index as f64) + first_counter.unwrap_or(0.0),
+            _ => (service_period * server_queue_index as f64) + first_counter.unwrap_or(0.0)
+        }
+    }
 
 
     pub fn add_user<'a>(
@@ -25,83 +36,73 @@ impl QueueStruct {
         user: JoinedUserOutput,
         servers: &'a mut TellersQueue,
     ) -> Result<UserQueuePos, &str> {
-        match self.queue.len() < CUSTOMER_COUNT {
-            true => {
-                let pos: usize = self.queue.len() % servers.tellers_num();
-                match servers.add_customer(pos, user.clone()) {
-                    Ok((teller_pos, user_pos)) => match servers.search_teller(teller_pos) {
-                        Ok(server) => {
-                            let timer = show_user_waiting_time(
-                                0.0,
-                                server.teller.server_id.clone(),
-                                self,
-                                user_pos,
-                            );
-                            let user_pos: UserQueuePos = UserQueuePos::new(
-                                user.user_query.name,
-                                user.user_query.national_id.clone(),
-                                user.action,
-                                self.queue.len() + 1,
-                                user_pos,
-                                teller_pos,
-                                timer,
-                            );
-                            
-                            self.queue.push(user_pos.clone());
-                            info!("Queue: {:?}", self.queue);
-                            Ok(user_pos)
-                        }
-                        Err(d) => Err(d),
-                    },
-                    Err(_) => Err("Unable to assign user to teller"),
-                }
-            }
-            false => Err("Queue Length exceeds Maximum"),
-        }
+     if self.queue.len() < CUSTOMER_COUNT {   
+        let teller_pos = self.queue.len() % servers.tellers_num();
+        let teller = servers.search_teller(teller_pos).unwrap();
+        let user_query = find_user(user.user_query.national_id.clone())?;
+        let timer = self.set_up_timer(0.0, Some(0.0), teller.users.len() + 1);
+        let user_queue_pos = UserQueuePos::new(
+            user_query.name,
+            user.user_query.national_id, 
+            user.action, 
+            self.queue.len(), 
+            teller.users.len(),
+            teller_pos,
+            timer,
+        );
+        self.queue.push(user_queue_pos.clone());
+        servers.add_customer(teller_pos, user_queue_pos.clone())?;
+        Ok(user_queue_pos)
+        } else {
+            Err("Unable to add user")
+        }                
     }
-    pub fn remove_user(
-        &mut self,
-        user_queue_pos: usize,
-        servers: &mut TellersQueue,
-    ) -> Result<(), &str> {
-        match user_queue_pos < CUSTOMER_COUNT {
-            true => {
-                let user: UserQueuePos = self.queue.remove(user_queue_pos);
-                match servers.remove_customer(user) {
-                    Ok(_) => {
-                        for (user_pos, user_data) in self.queue.iter_mut().enumerate() {
-                             if let Ok(user_query) = find_user(user_data.national_id.clone()) {
-                                    user_data.change_queue_pos(user_pos);
-                                    user_data.change_assigned_teller(user_pos % servers.tellers_num());
-                                    let _ = servers.add_customer(
-                                        user_pos % servers.tellers_num(),
-                                        JoinedUserOutput::new(user_query, user_data.action.clone())
-                                    );
-                            }; 
-                        }
-                        Ok(())
-                    }
-                    Err(_) => Err("Unable to remove user to teller"),
-                }
-            }
-            false => Err("Too Many Users"),
+    pub fn remove_user<'a>(
+        &'a mut self,
+        user_queue: UserQueuePos,
+        servers: &'a mut TellersQueue,
+    ) -> Result<(), &'a str> {
+        
+        match servers.remove_customer(user_queue.clone()) {
+            Ok(_) => {
+                self.queue.remove(user_queue.pos);
+
+                Ok(())
+            },
+            Err(err) => {
+                error!("Unable to remove customer");
+                Err(err)
+            },
         }
+        
+        
+        
+        
+        
+        
+        // match user_queue_pos < CUSTOMER_COUNT {
+        //     true => {
+                
+        //         match  {
+        //             Ok(_) => {
+        //                 for (user_pos, user_data) in self.queue.iter_mut().enumerate() {
+        //                             user_data.change_queue_pos(user_pos);
+        //                             user_data.change_assigned_teller(user_pos % servers.tellers_num());
+        //                             let _ = servers.add_customer(
+        //                                 user_pos % servers.tellers_num(),
+        //                                 user_data.clone()
+        //                             );
+        //                 }
+        //                 Ok(())
+        //             }
+        //             Err(_) => Err("Unable to remove user to teller"),
+        //         }
+        //     }
+        //     false => Err("Too Many Users"),
+        // }
     }
     /*Timer Events*/
-    pub fn set_up_timer(
-        &mut self,
-        prev_remaining_time: f64,
-        service_period: f64,
-        server_index: usize,
-    ) -> f64 {
-        let mut timer: f64 = 0.0;
-        if server_index > 2 {
-            timer = (service_period * server_index as f64) + prev_remaining_time;
-        } else if server_index <= 2 {
-            timer = prev_remaining_time;
-        }
-        timer
-    }
+    
  
 
     /*Live Changes*/
