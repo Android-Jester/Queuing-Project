@@ -64,11 +64,11 @@ pub async fn user_queues(
     }
 }
 #[post("/login")]
-pub async fn login_teller_request(
+pub async fn login_teller(
     login_data: web::Json<TellerLogin>,
     teller_queues: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
-    let teller_data = login_teller(login_data.into_inner());
+    let teller_data = db_check_teller(login_data.into_inner());
     match teller_data {
         Ok((teller_id, teller_loc)) => match teller_queues.lock() {
             Ok(mut teller_data) => {
@@ -85,10 +85,4 @@ pub async fn login_teller_request(
         },
         Err(e) => HttpResponse::NotFound().json(e),
     }
-}
-
-#[get("/tellers")]
-pub async fn tellers(tellers: web::Data<Mutex<SubQueues>>) -> impl Responder {
-    let tellers = tellers.lock().unwrap();
-    HttpResponse::Ok().json(tellers.tellers.clone())
 }

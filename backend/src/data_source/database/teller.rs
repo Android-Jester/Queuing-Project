@@ -3,16 +3,7 @@ use crate::data::prelude::*;
 use diesel::prelude::*;
 use diesel::result::Error;
 
-pub fn register_teller(teller_insert_data: TellerInsert) -> Result<usize, Error> {
-    let conn = &mut establish_connection();
-    conn.transaction(|conn| {
-        diesel::insert_into(Tellers::dsl::Tellers)
-            .values(teller_insert_data)
-            .execute(conn)
-    })
-}
-
-pub fn login_teller(teller_login: TellerLogin) -> Result<(String, i32), &'static str> {
+pub fn db_check_teller(teller_login: TellerLogin) -> Result<(String, i32), &'static str> {
     let conn = &mut establish_connection();
     let transactions_data = conn.transaction(|connection| {
         Tellers::dsl::Tellers

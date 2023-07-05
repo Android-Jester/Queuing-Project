@@ -42,10 +42,7 @@ pub async fn main_queue_join(
     sub_queues: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     match main_queue.lock().unwrap().add_user(
-        UserQueueData::new(
-            db_find_user(user_input.national_id.clone()).unwrap(),
-            user_input.activity.clone(),
-        ),
+        UserQueuePos::new(user_input),
         &mut sub_queues.lock().unwrap(),
     ) {
         Ok(added_user) => {

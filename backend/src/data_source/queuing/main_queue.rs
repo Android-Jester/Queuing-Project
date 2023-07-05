@@ -16,21 +16,6 @@ impl Default for MainQueue {
 impl MainQueue {
     /*Main Queue Events*/
 
-    fn set_up_timer(
-        &mut self,
-        service_period: f64,
-        first_counter: Option<f64>,
-        server_queue_index: usize,
-    ) -> f64 {
-        match server_queue_index {
-            1 => 0.0,
-            2..=CUSTOMER_COUNT => {
-                (service_period * server_queue_index as f64) + first_counter.unwrap_or(0.0)
-            }
-            _ => (service_period * server_queue_index as f64) + first_counter.unwrap_or(0.0),
-        }
-    }
-
     // adding user
     // 1. Get user's details
     // 2. Assign them to available teller
@@ -38,11 +23,20 @@ impl MainQueue {
     // 4. Include them into the queue
     // 5. Include them to sub queues
 
-    pub fn add_user(&mut self, added_user: UserQueuePos, servers: &mut SubQueues)
-    /*-> Result<UserQueuePos, &str>*/
-    {
-        if self.queue.len() < CUSTOMER_COUNT {
+    pub fn add_user(
+        &mut self,
+        mut added_user: UserQueuePos,
+        sub_queue: &mut SubQueues,
+    ) -> Result<(), &str> {
+        let user_position = self.queue.len();
+        let service_location = user_position % sub_queue.tellers_count();
+        if user_position < CUSTOMER_COUNT {
+            added_user.setup_main(user_position, service_location);
+            self.queue.push(added_user.clone());
+            sub_queue.add_customer(added_user).unwrap();
+            Ok(())
         } else {
+            Err("Unable to add user")
         }
         // if self.queue.len() < CUSTOMER_COUNT {
         //     let teller_pos = self.queue.len() % servers.tellers_num();
@@ -72,8 +66,7 @@ impl MainQueue {
     ) -> Result<(), &'a str> {
         match servers.remove_customer(user_queue.clone()) {
             Ok(_) => {
-                self.queue.remove(user_queue.pos);
-
+                self.queue.remove(user_queue.position.unwrap_or(0));
                 Ok(())
             }
             Err(err) => {
@@ -81,34 +74,11 @@ impl MainQueue {
                 Err(err)
             }
         }
-
-        // match user_queue_pos < CUSTOMER_COUNT {
-        //     true => {
-
-        //         match  {
-        //             Ok(_) => {
-        //                 for (user_pos, user_data) in self.queue.iter_mut().enumerate() {
-        //                             user_data.change_queue_pos(user_pos);
-        //                             user_data.change_assigned_teller(user_pos % servers.tellers_num());
-        //                             let _ = servers.add_customer(
-        //                                 user_pos % servers.tellers_num(),
-        //                                 user_data.clone()
-        //                             );
-        //                 }
-        //                 Ok(())
-        //             }
-        //             Err(_) => Err("Unable to remove user to teller"),
-        //         }
-        //     }
-        //     false => Err("Too Many Users"),
-        // }
     }
-    /*Timer Events*/
-
     /*Live Changes*/
-    pub fn queue_change(&mut self) {
-        for (pos, user) in self.queue.iter_mut().enumerate() {
-            user.change_queue_pos(pos + 1);
-        }
-    }
+    // pub fn queue_change(&mut self) {
+    //     for (pos, user) in self.queue.iter_mut().enumerate() {
+    //         user.change_queue_pos(pos + 1);
+    //     }
+    // }
 }
