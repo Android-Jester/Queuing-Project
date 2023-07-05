@@ -8,11 +8,11 @@ pub struct TellerQueueStruct {
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
-pub struct TellersQueue {
+pub struct SubQueues {
     pub tellers: Vec<Option<ServerQueue>>,
 }
 
-impl TellersQueue {
+impl SubQueues {
     pub fn tellers_num(&self) -> usize {
         if self.tellers.is_empty() {
             1
@@ -20,14 +20,7 @@ impl TellersQueue {
             self.tellers.len()
         }
     }
-    fn reassign_tellers(&mut self) {
-        for teller in &mut self.tellers {
-            match teller {
-                Some(queue) => queue.users = vec![],
-                None => {}
-            }
-        }
-    }
+
     pub fn add_teller(&mut self, teller: TellerQueueQuery) -> Result<(), &str> {
         match self.tellers_num() < SERVER_COUNT {
             true => {
@@ -79,8 +72,8 @@ impl TellersQueue {
             Some(index) => match &mut self.tellers[index] {
                 Some(teller) => match teller.users.is_empty() {
                     false => {
-                            teller.users.remove(index);
-                            self.reassign_tellers();
+                        teller.users.remove(index);
+                        // self.reassign_tellers();
                         Ok(())
                     }
                     true => Err("Unable to add customer"),

@@ -11,7 +11,7 @@ use diesel::prelude::*;
 //     })
 // }
 
-pub fn list_users_db() -> Result<Vec<UserInsert>, &'static str> {
+pub fn db_list_users() -> Result<Vec<UserInsert>, &'static str> {
     let conn = &mut establish_connection();
     let transactions_data = conn.transaction(|connection| {
         Users::dsl::Users
@@ -25,10 +25,8 @@ pub fn list_users_db() -> Result<Vec<UserInsert>, &'static str> {
     }
 }
 
-
-
 /*Authentication */
-pub fn login_user(login_data: UserLogin) -> Result<UserDataQuery, &'static str> {
+pub fn db_check_user(login_data: UserLogin) -> Result<UserDataQuery, &'static str> {
     let conn = &mut establish_connection();
     let user_data = conn.transaction(|connection| {
         Users::dsl::Users
@@ -39,7 +37,11 @@ pub fn login_user(login_data: UserLogin) -> Result<UserDataQuery, &'static str> 
     match user_data {
         Ok(user) => {
             if user.password.eq(&login_data.password) {
-                Ok(UserDataQuery::new(user.name, user.account_number, user.national_id))
+                Ok(UserDataQuery::new(
+                    user.name,
+                    user.account_number,
+                    user.national_id,
+                ))
             } else {
                 Err("Unable to login User")
             }
@@ -47,20 +49,20 @@ pub fn login_user(login_data: UserLogin) -> Result<UserDataQuery, &'static str> 
         Err(_) => Err("Unable to Find User"),
     }
 }
-pub fn login_guest(guest: Guest) -> Result<String, &'static str> {
+pub fn db_add_guest(insert_data: GuestInsert) -> Result<GuestInsert, &'static str> {
     let conn = &mut establish_connection();
-    let res = conn.transaction(|conn| {
-        diesel::insert_into(Guests::table)
-            .values(&guest)
+    let data = conn.transaction(|conn| {
+        diesel::insert_into(Guests::dsl::Guests)
+            .values(insert_data.clone())
             .execute(conn)
     });
-    match res {
-        Ok(_) => Ok(guest.national_id),
-        Err(_) => Err("Guest cannot be logged in"),
+    match data {
+        Ok(_) => Ok(insert_data),
+        Err(_) => Err("Unable to add guests"),
     }
 }
 
-pub fn find_user(national_id: String) -> Result<UserQuery, &'static str> {
+pub fn db_find_user(national_id: String) -> Result<UserQuery, &'static str> {
     let conn = &mut establish_connection();
     let transactions_data = conn.transaction(|connection| {
         Users::dsl::Users
@@ -71,18 +73,5 @@ pub fn find_user(national_id: String) -> Result<UserQuery, &'static str> {
     match transactions_data {
         Ok(teller) => Ok(teller),
         Err(_) => Err("Unable to Find User"),
-    }
-}
-
-pub fn register_guest(insert_data: GuestInsert) -> Result<GuestInsert, &'static str> {
-    let conn = &mut establish_connection();
-    let data = conn.transaction(|conn| {
-        diesel::insert_into(Guests::dsl::Guests)
-            .values(insert_data.clone())
-            .execute(conn)
-    });
-    match data {
-        Ok(_) => Ok(insert_data),
-        Err(_) => Err("Unable to add guests"),
     }
 }

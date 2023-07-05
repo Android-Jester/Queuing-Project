@@ -7,7 +7,7 @@ use log::{error, info};
 /// Allows registered users to use the queuing service
 #[post("/login")]
 pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
-    match login_user(login_data.into_inner()) {
+    match db_check_user(login_data.into_inner()) {
         Ok(data) => {
             info!("User: {:?} is logged in", data);
             HttpResponse::Ok().json(data)
@@ -22,62 +22,68 @@ pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
 /// Allows guests to use the service
 #[post("/guest/login")]
 pub async fn guest_login(guest: web::Json<GuestInsert>) -> impl Responder {
-    match register_guest(guest.into_inner()) {
-        Ok(data) => HttpResponse::Ok().json(data),
-        Err(err) => HttpResponse::BadRequest().body(err)
+    match db_add_guest(guest.into_inner()) {
+        Ok(added_guest) => {
+            info!("Guest {} has loggedin", added_guest.name);
+            HttpResponse::Ok().json(added_guest)
+        }
+        Err(err) => {
+            error!("ERROR: {}", err);
+            HttpResponse::BadRequest().body(err)
+        }
     }
 }
 
 /// Users and guests can join the main queue and assigned tellers
 #[post("/join")]
-pub async fn join_queue(
-    user: web::Json<UserQueryData>,
-    queue: web::Data<Mutex<QueueStruct>>,
-    servers: web::Data<Mutex<TellersQueue>>,
+pub async fn main_queue_join(
+    user_input: web::Json<UserInputData>,
+    main_queue: web::Data<Mutex<MainQueue>>,
+    sub_queues: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
-    match queue.lock().unwrap().add_user(
-        JoinedUserOutput::new(
-            find_user(user.national_id.clone()).unwrap(), 
-            user.action.clone()), &mut servers.lock().unwrap()
-        ) {
-        Ok(added_user) => HttpResponse::Ok().json(added_user),
-        Err(e) => HttpResponse::NotFound().body(e.to_string()),
+    match main_queue.lock().unwrap().add_user(
+        UserQueueData::new(
+            db_find_user(user_input.national_id.clone()).unwrap(),
+            user_input.activity.clone(),
+        ),
+        &mut sub_queues.lock().unwrap(),
+    ) {
+        Ok(added_user) => {
+            info!("Successful Join");
+            HttpResponse::Ok().json(added_user)
+        }
+        Err(e) => {
+            error!("ERROR: {}", e);
+            HttpResponse::NotFound().body("Unable to add user")
+        }
     }
-
-
-    
 }
 
 /// Removes user from the queue and resets the queue
 #[post("/leave")]
-pub async fn leave_queue(
+pub async fn main_queue_leave(
     user: web::Json<UserQueuePos>,
-    queue: web::Data<Mutex<QueueStruct>>,
-    servers: web::Data<Mutex<TellersQueue>>,
+    main_queue: web::Data<Mutex<MainQueue>>,
+    sub_queue: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
-    match queue.lock() {
+    match main_queue.lock() {
         Ok(mut queue) => {
-    let user = user.into_inner();
+            let user = user.into_inner();
 
-            match servers.lock() {
-                Ok(mut server) => {
-                    match queue.remove_user(user.clone(), &mut server) {
-                        Ok(_) => {
-                            info!("User: {} is leaving", user.national_id);
-                            HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))
-                        }
-                        Err(e) => {
-                            error!("User: {} Cannot Leave", user.national_id);
-                            HttpResponse::Ok().body(e.to_string())
-                        }
+            match sub_queue.lock() {
+                Ok(mut server) => match queue.remove_user(user.clone(), &mut server) {
+                    Ok(_) => {
+                        info!("User: {} is leaving", user.national_id);
+                        HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))
                     }
-                }
-                Err(err) => HttpResponse::NotFound().body(err.to_string())
+                    Err(e) => {
+                        error!("User: {} Cannot Leave", user.national_id);
+                        HttpResponse::Ok().body(e.to_string())
+                    }
+                },
+                Err(err) => HttpResponse::NotFound().body(err.to_string()),
             }
-            
         }
-        Err(err) => HttpResponse::NotFound().body(err.to_string())
+        Err(err) => HttpResponse::NotFound().body(err.to_string()),
     }
 }
-    
-

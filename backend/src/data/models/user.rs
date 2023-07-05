@@ -1,7 +1,6 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Selectable, Queryable, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[diesel(table_name = crate::data::schema::Users)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
@@ -43,9 +42,6 @@ impl UserQueuePos {
         }
     }
 
-
-    
-
     pub fn change_queue_pos(&mut self, pos: usize) {
         self.pos = pos;
     }
@@ -58,9 +54,9 @@ impl UserQueuePos {
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct UserQueryData {
+pub struct UserInputData {
     pub national_id: String,
-    pub action: String,
+    pub activity: String,
 }
 
 #[derive(Queryable, Insertable, Selectable, Serialize, Deserialize, Clone)]
@@ -95,9 +91,11 @@ pub struct UserDataQuery {
 impl UserDataQuery {
     pub fn new(name: String, account_number: String, national_id: String) -> Self {
         Self {
-            name, account_number, national_id
+            name,
+            account_number,
+            national_id,
         }
-    } 
+    }
 }
 
 #[derive(Selectable, Queryable, Serialize, Deserialize, Clone)]
@@ -107,8 +105,6 @@ pub struct UserLogin {
     pub account_number: String,
     pub password: String,
 }
-
-
 
 #[derive(Selectable, Queryable, Insertable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = crate::data::schema::Guests)]

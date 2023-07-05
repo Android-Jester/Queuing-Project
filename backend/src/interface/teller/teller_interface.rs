@@ -23,7 +23,7 @@ pub async fn record_transaction(transaction: web::Json<Transaction>) -> impl Res
 #[post("/logout")]
 pub async fn logout_teller(
     teller_index: web::Query<usize>,
-    tellers_queue: web::Data<Mutex<TellersQueue>>,
+    tellers_queue: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     match tellers_queue.lock() {
         Ok(mut teller) => {
@@ -37,20 +37,24 @@ pub async fn logout_teller(
 #[post("/remove")]
 pub async fn remove_user(
     user: web::Json<UserQueuePos>,
-    queue_data: web::Data<Mutex<QueueStruct>>,
-    server_queue: web::Data<Mutex<TellersQueue>>,
+    queue_data: web::Data<Mutex<MainQueue>>,
+    server_queue: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     // let mut queue = .unwrap();
     // let mut server = ;
-    match queue_data.lock().unwrap().remove_user(user.into_inner(), &mut server_queue.lock().unwrap()) {
+    match queue_data
+        .lock()
+        .unwrap()
+        .remove_user(user.into_inner(), &mut server_queue.lock().unwrap())
+    {
         Ok(_) => HttpResponse::Ok().body("Unimplemented Yet"),
         Err(_) => HttpResponse::NotFound().body("err"),
-}
+    }
 }
 
 #[get("/queue")]
 pub async fn user_queues(
-    user_queue_server: web::Data<Mutex<TellersQueue>>,
+    user_queue_server: web::Data<Mutex<SubQueues>>,
     teller_loc: web::Query<TellerQueueStruct>,
 ) -> impl Responder {
     if let Ok(queue) = &mut user_queue_server.lock() {
@@ -62,7 +66,7 @@ pub async fn user_queues(
 #[post("/login")]
 pub async fn login_teller_request(
     login_data: web::Json<TellerLogin>,
-    teller_queues: web::Data<Mutex<TellersQueue>>,
+    teller_queues: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     let teller_data = login_teller(login_data.into_inner());
     match teller_data {
@@ -84,7 +88,7 @@ pub async fn login_teller_request(
 }
 
 #[get("/tellers")]
-pub async fn tellers(tellers: web::Data<Mutex<TellersQueue>>) -> impl Responder {
+pub async fn tellers(tellers: web::Data<Mutex<SubQueues>>) -> impl Responder {
     let tellers = tellers.lock().unwrap();
     HttpResponse::Ok().json(tellers.tellers.clone())
-} 
+}

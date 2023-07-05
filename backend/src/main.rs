@@ -13,10 +13,10 @@ async fn main() -> std::io::Result<()> {
         Ipv4Addr::UNSPECIFIED
     );
 
-    let queue_struct: web::Data<Mutex<QueueStruct>> =
-        web::Data::new(Mutex::new(QueueStruct::default()));
-    let user_servers: web::Data<Mutex<TellersQueue>> =
-        web::Data::new(Mutex::new(TellersQueue::default()));
+    let queue_data_main: web::Data<Mutex<MainQueue>> =
+        web::Data::new(Mutex::new(MainQueue::default()));
+    let queue_data_sub: web::Data<Mutex<SubQueues>> =
+        web::Data::new(Mutex::new(SubQueues::default()));
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .supports_credentials()
@@ -26,8 +26,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .app_data(queue_struct.clone())
-            .app_data(user_servers.clone())
+            .app_data(queue_data_main.clone())
+            .app_data(queue_data_sub.clone())
             .service(list_users)
             /*Teller Actions*/
             .configure(teller_config)
