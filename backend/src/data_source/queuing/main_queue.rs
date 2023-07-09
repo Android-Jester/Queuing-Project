@@ -38,26 +38,6 @@ impl MainQueue {
         } else {
             Err("Unable to add user")
         }
-        // if self.queue.len() < CUSTOMER_COUNT {
-        //     let teller_pos = self.queue.len() % servers.tellers_num();
-        //     let teller = servers.search_teller(teller_pos).unwrap();
-        //     let user_query = db_find_user(user.user_query.national_id.clone())?;
-        //     let timer = self.set_up_timer(0.0, Some(0.0), teller.users.len() + 1);
-        //     let user_queue_pos = UserQueuePos::new(
-        //         user_query.name,
-        //         user.user_query.national_id,
-        //         user.action,
-        //         self.queue.len(),
-        //         teller.users.len(),
-        //         teller_pos,
-        //         timer,
-        //     );
-        //     self.queue.push(user_queue_pos.clone());
-        //     servers.add_customer(teller_pos, user_queue_pos.clone())?;
-        //     Ok(user_queue_pos)
-        // } else {
-        //     Err("Unable to add user")
-        // }
     }
     pub fn remove_user<'a>(
         &'a mut self,
@@ -76,9 +56,9 @@ impl MainQueue {
         }
     }
     /*Live Changes*/
-    // pub fn queue_change(&mut self) {
-    //     for (pos, user) in self.queue.iter_mut().enumerate() {
-    //         user.change_queue_pos(pos + 1);
-    //     }
-    // }
+    pub fn queue_change(&mut self) {
+        for (pos, user) in self.queue.iter_mut().enumerate() {
+            user.change_queue_pos(pos + 1);
+        }
+    }
 }
