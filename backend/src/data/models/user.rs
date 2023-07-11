@@ -16,49 +16,53 @@ pub struct UserQueuePos {
     pub name: String,
     pub national_id: String,
     pub activity: String,
-    pub position: Option<usize>,
-    pub sub_queue_position: Option<usize>,
-    pub service_location: Option<usize>,
-    pub startup_timer: Option<f64>,
+    pub position: usize,
+    pub sub_queue_position: usize,
+    pub service_location: usize,
+    pub startup_timer: f64,
+}
+#[derive(Default, Deserialize, Serialize, Clone, Debug, PartialEq)]
+pub struct UserQueueInput {
+    pub national_id: String,
+    pub activity: String,
 }
 
 impl UserQueuePos {
     pub fn new(user_input: web::Json<UserInputData>) -> Self {
         Self {
-            name: user_input.name.clone(),
+            name: "JJ".to_string(),
             national_id: user_input.national_id.clone(),
             activity: user_input.activity.clone(),
-            position: None,
-            sub_queue_position: None,
-            service_location: None,
-            startup_timer: None,
+            position: 0,
+            sub_queue_position: 0,
+            service_location: 0,
+            startup_timer: 0.0,
         }
     }
 
     pub fn setup_main(&mut self, position: usize, service_location: usize) {
-        self.position = Some(position);
-        self.service_location = Some(service_location);
+        self.position = position;
+        self.service_location = service_location;
     }
 
     pub fn setup_sub(&mut self, sub_queue_position: usize, startup_timer: f64) {
-        self.sub_queue_position = Some(sub_queue_position);
-        self.startup_timer = Some(startup_timer);
+        self.sub_queue_position = sub_queue_position;
+        self.startup_timer = startup_timer;
     }
 
     pub fn change_queue_pos(&mut self, pos: usize) {
-        self.position = Some(pos);
+        self.position = pos;
     }
     pub fn change_assigned_teller(&mut self, new_teller: usize) {
-        self.service_location = Some(new_teller);
+        self.service_location = new_teller;
     }
     pub fn change_teller_queue_pos(&mut self, new_server_pos: usize) {
-        self.sub_queue_position = Some(new_server_pos);
+        self.sub_queue_position = new_server_pos;
     }
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct UserInputData {
-    pub name: String,
     pub national_id: String,
     pub activity: String,
 }

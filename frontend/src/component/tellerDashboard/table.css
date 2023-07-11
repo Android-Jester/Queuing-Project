@@ -4,7 +4,7 @@ margin-left: 20px;
 flex:1;
 -webkit-box-shadow:2px 4px 10px 1px rgba(0,0,0,0.47);
 box-shadow: 2px 4px 10px 1px rgba(201, 201, 201,0.47);
-border-radius:30px;
+border-radius:0px;
 height:max-content;
 
 }
@@ -12,7 +12,7 @@ table {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
-    border-radius: 30px;
+    border-radius: 8px;
    height: 60vh;
    background-color: white;
    
@@ -35,4 +35,13 @@ table {
     border-top: 0px;
     
   }
- 
+ .T_stat{
+    width:fit-content;
+    color: azure;
+    margin:0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+    color: #dddddd;
+ }
+ .S_complete{
+  margin-right: 2rem;
+ }

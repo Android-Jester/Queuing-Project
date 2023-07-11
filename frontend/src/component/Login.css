@@ -1,145 +1,166 @@
+@media screen and (min-width: 1025px) {
 
-    .main{
+
+    .main {
         text-align: center;
         justify-content: center;
-        display:flex;
+        display: flex;
         padding: 90px 0 90px 0;
-        margin:0px 0px 0px 0px;
+        margin: 0px 0px 0px 0px;
         margin-bottom: 0;
-        background-color: rgb(207,207,207);
-        background-image: url("C:\Users\Lenovo\Desktop\parody_project\parody-project\src\images\banner1.png") ;
+        background-color: rgb(207, 207, 207);
+        background-image: url("../images/banner1.png");
+        /* background-image: url("C:\Users\Lenovo\Desktop\parody_project\parody-project\src\images\banner1.png") ; */
         background-position-x: 100%;
         background-position-y: 100%;
         background-position: center;
         background-size: auto 100%;
         background-repeat: no-repeat;
-        height:100vh;
-        
-       
-       
-       
+        height: 100vh;
+
+
+
+
     }
-    .Stext1{
-        color:white;
+
+    .Stext1 {
+        color: white;
         font-weight: bold;
     }
-   
-    .AccountNo,.Password{
-        width:450px;
-        height:50px;
-        border-radius:10px;
+
+    .AccountNo,
+    .Password {
+        width: 450px;
+        height: 50px;
+        border-radius: 10px;
         box-shadow: inset 0px 0px 25px 0px #888;
-        
+
     }
-   
-    .Password{
-      margin: 1rem 0;
+
+    .Password {
+        margin: 1rem 0;
     }
 
     h1 {
-        color:  #3455c9;
+        color: #3455c9;
     }
 
-     .Lform{
+    .Lform {
         display: block;
         justify-content: center;
         margin: 3rem;
     }
 
-    .AccountNo, .Password{
+    .AccountNo,
+    .Password {
         text-align: center;
     }
- .Gdetailsb{
-    font-size:larger;
-    color: #1434a9;
- }
-    .Lbutton{
+
+    .Gdetailsb {
+        font-size: larger;
+        color: white;
+        font-size: larger;
+    }
+
+    .L_p {
+        color: white;
+        font-size: medium;
+    }
+
+    .Lbutton {
         width: 450px;
         height: 3rem;
         padding: 5px;
         color: #fff;
         font-size: 20px;
         font-weight: 700;
-        background-image: linear-gradient(45deg,#0a85ff, #1434a9);
+        background-image: linear-gradient(45deg, #0a85ff, #1434a9);
         border-radius: 10px;
     }
+}
 
-@media screen and (max-width:960px){
-    .main{
+@media screen and (max-width:960px) {
+    .main {
         text-align: center;
         justify-content: center;
-        display:flex;
+        display: flex;
         padding: 90px 0 90px 0;
-        margin:0px 0px 0px 0px;
+        margin: 0px 0px 0px 0px;
         margin-bottom: 0;
-        background-color: rgb(207,207,207);
-        background-image: url("C:\Users\Lenovo\Desktop\parody_project\parody-project\src\images\banner1.png") ;
+        background-color: rgb(207, 207, 207);
+        /* background-image: url("C:\Users\Lenovo\Desktop\parody_project\parody-project\src\images\banner1.png"); */
+        background-image: url("../images/banner1.png");
         background-position-x: 100%;
         background-position-y: 100%;
         background-position: center;
         background-size: auto 100%;
         background-repeat: no-repeat;
-        
-        
-       
-       
-       
+
+
+
+
+
     }
- 
-    .sub-main{
-        display:flex;
+
+    .sub-main {
+        display: flex;
         justify-content: center;
         height: 550px;
         width: 90%;
         padding-top: 30px;
         border-radius: 60px;
         background-color: white;
-        
+
     }
-  
-     .Gdetailsb{
-        font-size:large;
+
+    .Gdetailsb {
+        font-size: large;
         color: #1434a9;
-     }
-    .AccountNo,.Password{
-        width:300px;
-        height:50px;
-        border-radius:60px;
-        box-shadow: inset 0px 0px 25px 0px #888;
-        
+
+
     }
-   
-    .Password{
-      margin: 1rem 0;
-      margin-bottom: 1px;
+
+    .AccountNo,
+    .Password {
+        width: 300px;
+        height: 50px;
+        border-radius: 60px;
+        box-shadow: inset 0px 0px 25px 0px #888;
+
+    }
+
+    .Password {
+        margin: 1rem 0;
+        margin-bottom: 1px;
     }
 
     h1 {
-        color:  #3455c9;
+        color: #3455c9;
     }
 
-     .Lform{
+    .Lform {
         display: block;
         justify-content: center;
         margin: 3rem;
     }
 
-    .AccountNo, .Password{
+    .AccountNo,
+    .Password {
         text-align: center;
     }
 
-    .Lbutton{
-        width: 12rem;
+    .Lbutton {
+        width: 19rem;
         height: 3rem;
         padding: 5px;
         color: #fff;
         font-size: 20px;
         font-weight: 700;
-        background-image: linear-gradient(45deg,#0a85ff, #1434a9);
+        background-image: linear-gradient(45deg, #0a85ff, #1434a9);
         border-radius: 10rem;
         margin-top: 0px;
     }
 
-    
+
 
 }

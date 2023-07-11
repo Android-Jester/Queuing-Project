@@ -10,3 +10,12 @@
     height:100px;
     background-color: white;
 }
+.S1_icon{
+    width:fit-content;
+    height:33px;
+    color:#1434a9;
+}
+.S_font{
+    font-size: large;
+    font-weight: bold;
+}

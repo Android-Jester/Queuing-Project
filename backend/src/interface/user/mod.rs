@@ -1,8 +1,7 @@
-pub mod models;
 pub mod user_interface;
 
 pub mod prelude {
-    pub use super::models::*;
+
     pub use super::user_interface::*;
     use crate::prelude::*;
 

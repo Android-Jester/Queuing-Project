@@ -61,7 +61,7 @@ form {
 form input {
     text-align: center;
 }
-button{
+.T_button{
     width: 19rem;
     height: 3rem;
     padding: 5px;
