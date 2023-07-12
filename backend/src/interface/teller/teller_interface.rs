@@ -1,5 +1,7 @@
 use crate::prelude::*;
 use std::sync::Mutex;
+use log::{error, info};
+use serde::Deserialize;
 
 #[post("/transaction")]
 pub async fn record_transaction(transaction: web::Json<Transaction>) -> impl Responder {
@@ -27,7 +29,7 @@ pub async fn logout_teller(
 ) -> impl Responder {
     match tellers_queue.lock() {
         Ok(mut teller) => {
-            let _ = teller.remove_teller(teller_index.into_inner());
+            let _ = teller.teller_remove(teller_index.into_inner());
             HttpResponse::Ok().body("left the queue".to_string())
         }
         Err(_) => HttpResponse::Conflict().body("Teller Not Found"),
@@ -42,15 +44,18 @@ pub async fn remove_user(
 ) -> impl Responder {
     // let mut queue = .unwrap();
     // let mut server = ;
-    match queue_data
+    queue_data
         .lock()
         .unwrap()
-        .remove_user(user.into_inner(), &mut server_queue.lock().unwrap())
-    {
-        Ok(_) => HttpResponse::Ok().body("Unimplemented Yet"),
-        Err(_) => HttpResponse::NotFound().body("err"),
-    }
+        .remove_user(user.into_inner(), &mut server_queue.lock().unwrap());
+        HttpResponse::Ok().body("Unimplemented Yet")
 }
+
+#[derive(Deserialize)]
+pub struct TellerQueueStruct {
+    teller_position: usize
+}
+
 
 #[get("/queue")]
 pub async fn user_queues(
@@ -58,7 +63,7 @@ pub async fn user_queues(
     teller_loc: web::Query<TellerQueueStruct>,
 ) -> impl Responder {
     if let Ok(queue) = &mut user_queue_server.lock() {
-        HttpResponse::Ok().json(queue.show_users(teller_loc.teller_position))
+        HttpResponse::Ok().json(queue.teller_show_queue(teller_loc.teller_position))
     } else {
         HttpResponse::NotFound().body("No Such Data")
     }
@@ -70,15 +75,23 @@ pub async fn login_teller(
 ) -> impl Responder {
     let teller_data = db_check_teller(login_data.into_inner());
     match teller_data {
-        Ok((teller_id, teller_loc)) => match teller_queues.lock() {
+        Ok((teller_id, teller_loc, service_time)) => match teller_queues.lock() {
             Ok(mut teller_data) => {
-                let teller_acquired = teller_data.add_teller(TellerQueueQuery {
-                    server_id: teller_id,
+                let teller_acquired = teller_data.teller_add(TellerQueueQuery {
+                    server_id: teller_id.clone(),
                     server_station: teller_loc,
+                    teller_state: TellerState::Active,
+                    service_time
                 });
                 match teller_acquired {
-                    Ok(_) => HttpResponse::Ok().json("Logged In"),
-                    Err(_) => HttpResponse::NotAcceptable().body("Unable to login User"),
+                    Ok(_) => {
+                        info!("Logged in {}", teller_id);
+                        HttpResponse::Ok().json("Logged In")
+                    },
+                    Err(err) => {
+                        error!("ERROR: {}", err);
+                        HttpResponse::NotAcceptable().body("Unable to login User")
+                    },
                 }
             }
             Err(err) => HttpResponse::BadRequest().body(err.to_string()),

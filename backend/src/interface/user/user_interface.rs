@@ -41,8 +41,9 @@ pub async fn main_queue_join(
     main_queue: web::Data<Mutex<MainQueue>>,
     sub_queues: web::Data<Mutex<SubQueues>>,
 ) -> impl Responder {
+    let user_name = db_find_user(user_input.national_id.clone()).unwrap().name;
     match main_queue.lock().unwrap().add_user(
-        UserQueuePos::new(user_input),
+        UserQueuePos::new(user_input, user_name),
         &mut sub_queues.lock().unwrap(),
     ) {
         Ok(added_user) => {
@@ -68,16 +69,14 @@ pub async fn main_queue_leave(
             let user = user.into_inner();
 
             match sub_queue.lock() {
-                Ok(mut server) => match queue.remove_user(user.clone(), &mut server) {
-                    Ok(_) => {
-                        info!("User: {} is leaving", user.national_id);
+                Ok(mut server) =>
+                    {
+                        let removed_user = queue.remove_user(user.clone(), &mut server);
+                        info!("User: {} is leaving", removed_user.name);
                         HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))
                     }
-                    Err(e) => {
-                        error!("User: {} Cannot Leave", user.national_id);
-                        HttpResponse::Ok().body(e.to_string())
-                    }
-                },
+
+
                 Err(err) => HttpResponse::NotFound().body(err.to_string()),
             }
         }

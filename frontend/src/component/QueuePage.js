@@ -42,7 +42,7 @@ function QueuePage() {
                 <div style={{ width: 80, height: 80 }}>
                     <CircularProgressbar minValue={1} maxValue={5} value={reValue.position} text={reValue.position} />
                 </div>
-                <p><b>Estimated waiting Time:</b></p>
+                <p>Estimated waiting Time:</p>
                 <p>00:23:56</p>
                 <div className="btn">
                     <button className="Qpbutton" type="submit_Q" onClick={handleLeaveQueue}>Leave queue </button>

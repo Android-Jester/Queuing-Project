@@ -28,9 +28,9 @@ pub struct UserQueueInput {
 }
 
 impl UserQueuePos {
-    pub fn new(user_input: web::Json<UserInputData>) -> Self {
+    pub fn new(user_input: web::Json<UserInputData>, name: String) -> Self {
         Self {
-            name: "JJ".to_string(),
+            name,
             national_id: user_input.national_id.clone(),
             activity: user_input.activity.clone(),
             position: 0,
@@ -40,14 +40,14 @@ impl UserQueuePos {
         }
     }
 
-    pub fn setup_main(&mut self, position: usize, service_location: usize) {
+    pub fn setup_main(&mut self, position: usize) {
         self.position = position;
-        self.service_location = service_location;
     }
 
-    pub fn setup_sub(&mut self, sub_queue_position: usize, startup_timer: f64) {
+    pub fn setup_sub(&mut self, sub_queue_position: usize, teller_location: usize, startup_timer: f64) {
         self.sub_queue_position = sub_queue_position;
         self.startup_timer = startup_timer;
+        self.service_location = teller_location;
     }
 
     pub fn change_queue_pos(&mut self, pos: usize) {

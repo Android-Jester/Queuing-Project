@@ -3,7 +3,7 @@ use crate::data::prelude::*;
 use diesel::prelude::*;
 use diesel::result::Error;
 
-pub fn db_check_teller(teller_login: TellerLogin) -> Result<(String, i32), &'static str> {
+pub fn db_check_teller(teller_login: TellerLogin) -> Result<(String, i32, f64), &'static str> {
     let conn = &mut establish_connection();
     let transactions_data = conn.transaction(|connection| {
         Tellers::dsl::Tellers
@@ -14,7 +14,7 @@ pub fn db_check_teller(teller_login: TellerLogin) -> Result<(String, i32), &'sta
     match transactions_data {
         Ok(teller) => {
             if teller.password.eq(&teller_login.password) {
-                Ok((teller.server_id, teller.server_station))
+                Ok((teller.server_id, teller.server_station, teller.service_time as f64))
             } else {
                 Err("Unable to login Teller")
             }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { CgProfile } from 'react-icons/cg';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
@@ -13,9 +13,16 @@ function CustomerPage() {
      cusId:''
     });*/
 
-    const { reValue, setReValue } = useContext(UserContext);
-    const F_value = reValue;
 
+
+    const { reValue, setReValue } = useContext(UserContext);
+
+    // let stated = {
+    //     cusId: reValue
+    // }
+    const F_value = reValue;
+    let ref = useRef(F_value);
+    // setState(stated.cusId);
     const Cus_n = useNavigate();
 
 
@@ -32,7 +39,7 @@ function CustomerPage() {
     }
     const handleCusSubmit = () => {
         axios.post(`${process.env.REACT_APP_BaseUrl}/user/join`, {
-            national_id: F_value,
+            national_id: ref.current,
             activity: dropdownCus,
         })
             .then(res => {
@@ -77,7 +84,7 @@ function CustomerPage() {
                     </optgroup>
                 </select>
                 <h2>National_ID:</h2>
-                <input type="text" name="cusId" className="ID_field" value={reValue} readOnly /> <br />
+                <input type="text" name="cusId" className="ID_field" value={ref.current} readOnly /> <br />
                 <div className="btn">
                     <button className="Cusbutton" onClick={handleCusSubmit} type="submit">Join Queue</button>
                 </div>

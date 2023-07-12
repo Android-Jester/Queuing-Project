@@ -39,13 +39,22 @@ pub struct TellerQuery {
     pub server_id: String,
     pub server_station: i32,
     pub password: String,
+    pub service_time: f32
 }
-#[derive(Selectable, Queryable, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-#[diesel(table_name = crate::data::schema::Tellers)]
-#[diesel(check_for_backend(diesel::mysql::Mysql))]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+pub enum TellerState {
+    Active, InActive, PendingRelease
+}
+
+
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+// #[diesel(table_name = crate::data::schema::Tellers)]
+// #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct TellerQueueQuery {
     pub server_id: String,
     pub server_station: i32,
+    pub service_time: f64,
+    pub teller_state: TellerState
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize, Clone)]

@@ -1,6 +1,5 @@
 use crate::prelude::*;
-use log::*;
-use crate::prelude::Users::national_id;
+
 
 #[derive(Debug)]
 pub struct MainQueue {
@@ -32,10 +31,10 @@ impl MainQueue {
     ) -> Result<UserQueuePos, &str> {
         match self.queue.iter().find(|user| user.national_id == added_user.national_id) {
             None => {
-                let user_position = self.queue.len();
-                if user_position < CUSTOMER_COUNT && sub_queue.tellers_count() > 0 {
-                    added_user.setup_main(user_position, user_position % sub_queue.tellers_count());
-                    sub_queue.add_customer(&mut added_user).unwrap();
+                let user_position = self.queue.len() + 1;
+                if user_position < CUSTOMER_COUNT && sub_queue.teller_count() > 0 {
+                    added_user.setup_main(user_position);
+                    sub_queue.customer_add(&mut added_user).unwrap();
                     self.queue.push(added_user.clone());
                     Ok(added_user)
                 } else {
@@ -51,10 +50,10 @@ impl MainQueue {
         &'a mut self,
         user_queue: UserQueuePos,
         servers: &'a mut SubQueues,
-    ) {
+    ) -> UserQueuePos {
         let removed_user = self.queue.remove(user_queue.position);
         self.main_queue_realign(removed_user.position);
-        servers.remove_customer(removed_user);
+        servers.customer_remove(removed_user, )
 
     }
     /*Live Changes*/
