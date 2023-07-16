@@ -1,7 +1,8 @@
+pub mod cors;
 pub mod user_interface;
-
 pub mod prelude {
 
+    pub use super::cors;
     pub use super::user_interface::*;
     use crate::prelude::*;
 
@@ -11,6 +12,7 @@ pub mod prelude {
                 .service(user_login)
                 .service(guest_login)
                 .service(main_queue_join)
+                // .service()
                 .service(main_queue_leave),
         );
     }

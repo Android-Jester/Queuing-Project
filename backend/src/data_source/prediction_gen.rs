@@ -4,6 +4,7 @@ use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};
 use std::num::NonZeroUsize;
+use log::info;
 
 ///Split data into test data and train data to verify the fact
 fn classify_data(complete_data: &(Vec<[f64; 4]>, Vec<u8>)) -> (Vec<[f64; 4]>, Vec<u8>) {
@@ -28,12 +29,14 @@ fn train_model(
         .max_samples(samples);
 
     let mut table_builder = TableBuilder::new();
+    info!("DATA: {:?}", train_data);
     let (data, target) = train_data;
     for (item_count, info) in data.iter().enumerate() {
         table_builder
-            .add_row(&info[0..], target[item_count] as f64)
+            .add_row(info.as_slice(), target[item_count] as f64)
             .expect("Data cannot be added");
     }
+    info!("Table built: {:?}", table_builder);
     let table = table_builder.build().expect("No Table built");
     random_forest_option_data.fit(Gini, table)
 }
@@ -41,6 +44,7 @@ fn train_model(
 /// predict best line
 pub fn prediction(pred: [f64; SERVER_COUNT]) -> u8 {
     let service_times_data = get_all_service_times();
+    info!("Service Times: {:?}", service_times_data);
     let data = classify_data(&service_times_data);
     let classifier = train_model(100, 10, 20, data);
     let acc_pred = classifier.predict(&pred);

@@ -1,6 +1,7 @@
-use crate::prelude::*;
-use actix_web::*;
 use std::sync::Mutex;
+
+use crate::{interface::sse::broadcaster::Broadcaster, prelude::*};
+use actix_web::*;
 
 use log::{error, info};
 
@@ -10,6 +11,8 @@ pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
     match db_check_user(login_data.into_inner()) {
         Ok(data) => {
             info!("User: {:?} is logged in", data);
+            // web_state.lock().unwrap().update_state();
+
             HttpResponse::Ok().json(data)
         }
         Err(_) => {
@@ -40,19 +43,31 @@ pub async fn main_queue_join(
     user_input: web::Json<UserInputData>,
     main_queue: web::Data<Mutex<MainQueue>>,
     sub_queues: web::Data<Mutex<SubQueues>>,
+    broadcast_agent: web::Data<Broadcaster>,
 ) -> impl Responder {
+    // let sub_queue = sub_queues.lock().unwrap();
     let user_name = db_find_user(user_input.national_id.clone()).unwrap().name;
+    let mut sub_queue = sub_queues.lock().unwrap();
+    // let mut tellers_service_times:[f64; SERVER_COUNT] = [0.0; SERVER_COUNT];
+    // let _ = sub_queue.tellers.iter().map(|data| {
+    //     tellers_service_times[data.teller.server_station as usize] = data.teller.service_time.as_secs_f64() / 60.0;
+    // });
+    // let prediction = prediction(tellers_service_times) as usize;
+
     match main_queue.lock().unwrap().add_user(
-        UserQueuePos::new(user_input, user_name),
-        &mut sub_queues.lock().unwrap(),
+        UserQueuePos::new(user_input.into_inner(), user_name, 1),
+        &mut sub_queue,
     ) {
         Ok(added_user) => {
             info!("Successful Join");
+            broadcast_agent
+                .broadcast(&sub_queue, added_user.service_location)
+                .await;
             HttpResponse::Ok().json(added_user)
         }
         Err(e) => {
             error!("ERROR: {}", e);
-            HttpResponse::NotFound().body("Unable to add user")
+            HttpResponse::NotFound().body(e)
         }
     }
 }
@@ -63,19 +78,30 @@ pub async fn main_queue_leave(
     user: web::Json<UserQueuePos>,
     main_queue: web::Data<Mutex<MainQueue>>,
     sub_queue: web::Data<Mutex<SubQueues>>,
+    broadcast_agent: web::Data<Broadcaster>,
 ) -> impl Responder {
+    info!("Attempted leaving: {:?}", user);
     match main_queue.lock() {
         Ok(mut queue) => {
             let user = user.into_inner();
 
             match sub_queue.lock() {
-                Ok(mut server) =>
-                    {
-                        let removed_user = queue.remove_user(user.clone(), &mut server);
-                        info!("User: {} is leaving", removed_user.name);
-                        HttpResponse::Ok().body(format!("user leaving: {}", user.national_id))
+                Ok(mut server) => {
+                    let removed_user = queue.remove_user(user.clone(), &mut server);
+                    match removed_user {
+                        Ok(removed_user) => {
+                            broadcast_agent
+                                .broadcast(&server, removed_user.service_location)
+                                .await;
+                            info!("Successful Leave");
+                            HttpResponse::Ok().body(format!("Removed: {:?}", removed_user))
+                        }
+                        Err(err) => {
+                            error!("ERROR: {}", err);
+                            HttpResponse::NotFound().body(err)
+                        }
                     }
-
+                }
 
                 Err(err) => HttpResponse::NotFound().body(err.to_string()),
             }

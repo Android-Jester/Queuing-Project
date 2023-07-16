@@ -25,6 +25,20 @@ pub fn db_list_users() -> Result<Vec<UserInsert>, &'static str> {
     }
 }
 
+pub fn db_list_tellers() -> Result<Vec<TellerQuery>, &'static str> {
+    let conn = &mut establish_connection();
+    let transactions_data = conn.transaction(|connection| {
+        Tellers::dsl::Tellers
+            .select(TellerQuery::as_select())
+            .load(connection)
+    });
+
+    match transactions_data {
+        Ok(transactions) => Ok(transactions),
+        Err(_) => Err("Unable to find transactions"),
+    }
+}
+
 /*Authentication */
 pub fn db_check_user(login_data: UserLogin) -> Result<UserDataQuery, &'static str> {
     let conn = &mut establish_connection();
@@ -50,6 +64,7 @@ pub fn db_check_user(login_data: UserLogin) -> Result<UserDataQuery, &'static st
     }
 }
 pub fn db_add_guest(insert_data: GuestInsert) -> Result<GuestInsert, &'static str> {
+    println!("Guest: {:?}", insert_data);
     let conn = &mut establish_connection();
     let data = conn.transaction(|conn| {
         diesel::insert_into(Guests::dsl::Guests)
@@ -58,7 +73,10 @@ pub fn db_add_guest(insert_data: GuestInsert) -> Result<GuestInsert, &'static st
     });
     match data {
         Ok(_) => Ok(insert_data),
-        Err(_) => Err("Unable to add guests"),
+        Err(err) => {
+            println!("ERROR: {:?}", err);
+            Err("Unable to add guests")
+        }
     }
 }
 

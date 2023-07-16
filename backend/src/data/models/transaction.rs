@@ -9,14 +9,14 @@ pub enum TransactionsType {
     BillPayment { service_time: f32 },
 }
 
-#[derive(Selectable, Queryable, Insertable, Deserialize, Serialize)]
+#[derive(Selectable, Queryable, Insertable, Deserialize, Serialize, Clone)]
 #[diesel(table_name = crate::data::schema::Transactions)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 pub struct Transaction {
     pub transaction_detail: String,
     pub server_id: String,
     pub national_id: Option<String>,
-    pub guest_national_id: Option<String>,
+    // pub guest_national_id: Option<String>,
     pub duration: f32,
     pub transaction_time: NaiveDateTime,
 }
@@ -47,7 +47,7 @@ impl Transaction {
         Transaction {
             transaction_detail: action,
             national_id,
-            guest_national_id,
+            // guest_national_id,
             server_id: server_identification,
             duration,
             transaction_time,

@@ -30,12 +30,10 @@ CREATE TABLE Transactions (
     transaction_detail VARCHAR(255) NOT NULL,
     server_id VARCHAR(255) NOT NULL,
     national_id VARCHAR(15),
-    guest_national_id VARCHAR(15),
+--     guest_national_id VARCHAR(15),
     duration FLOAT NOT NULL,
     transaction_time TIMESTAMP NOT NULL,
     -- Foreign Key pair
-    FOREIGN KEY (national_id) REFERENCES Users(national_id),
-    FOREIGN KEY (guest_national_id) REFERENCES Guests(national_id),
     FOREIGN KEY (server_id) REFERENCES Tellers(server_id)
 );
 
