@@ -1,6 +1,6 @@
 use crate::{interface::sse::broadcaster::Broadcaster, prelude::*};
 use log::{error, info};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{sync::Mutex, time::Duration};
 
 #[post("/dismiss")]
@@ -11,7 +11,7 @@ pub async fn record_transaction(
 ) -> impl Responder {
     let transaction = transaction.into_inner();
     match add_transaction(transaction.clone()) {
-        Ok(d) => {
+        Ok(_) => {
             match queue_data.lock().unwrap().dismiss_user(
                 transaction.national_id.unwrap(),
                 &mut sub_queue_data.lock().unwrap(),
@@ -55,7 +55,7 @@ pub async fn logout_teller(
                         }
                     }
                     TellerState::PendingRelease => {
-                        return HttpResponse::Conflict().body("Teller Already Logged Out")
+                        HttpResponse::Conflict().body("Teller Already Logged Out")
                     }
                 }
             } else {

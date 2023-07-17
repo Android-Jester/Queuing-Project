@@ -14,12 +14,30 @@ pub fn db_check_teller(teller_login: TellerLogin) -> Result<(String, i32, f64), 
     match transactions_data {
         Ok(teller) => {
             if teller.password.eq(&teller_login.password) {
-                Ok((teller.server_id, teller.server_station, teller.service_time as f64))
+                Ok((
+                    teller.server_id,
+                    teller.server_station,
+                    teller.service_time as f64,
+                ))
             } else {
                 Err("Unable to login Teller")
             }
         }
         Err(_) => Err("Unable to Find Teller"),
+    }
+}
+
+pub fn find_guest(national_id: String) -> Result<GuestQuery, &'static str> {
+    let conn = &mut establish_connection();
+    let guest_data = conn.transaction(|connection| {
+        Guests::dsl::Guests
+            .select(GuestQuery::as_select())
+            .find(national_id)
+            .first(connection)
+    });
+    match guest_data {
+        Ok(guest) => Ok(guest),
+        Err(e) => Err("No Matching Guest"),
     }
 }
 

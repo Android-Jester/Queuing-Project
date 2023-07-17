@@ -24,7 +24,6 @@ pub struct Transaction {
 impl Transaction {
     pub fn new(
         national_id: Option<String>,
-        guest_national_id: Option<String>,
         transaction: TransactionsType,
         server_identification: String,
         transaction_time: NaiveDateTime,

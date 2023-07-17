@@ -34,10 +34,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(queue_data_sub.clone())
             .app_data(web::Data::from(Arc::clone(&data)))
             .service(list_users)
-            /*Teller Actions*/
-            .configure(teller_config)
-            /*User Actions*/
-            .configure(user_config)
+            .configure(teller_config) /* Teller Actions */
+            .configure(user_config) /* User Actions */
     })
     .keep_alive(KeepAlive::Os)
     .bind((Ipv4Addr::UNSPECIFIED, 3000))?

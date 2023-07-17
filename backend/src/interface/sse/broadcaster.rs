@@ -5,7 +5,7 @@ use actix_web_lab::sse::{self, ChannelStream, Sse};
 use futures_util::future;
 use parking_lot::Mutex;
 
-use crate::{interface::teller::teller_queue, prelude::*};
+use crate::prelude::*;
 
 pub struct Broadcaster {
     inner: Mutex<BroadcasterInner>,

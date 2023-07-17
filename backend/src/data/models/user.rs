@@ -1,4 +1,3 @@
-use bytestring::ByteString;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;

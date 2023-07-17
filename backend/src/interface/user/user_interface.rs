@@ -1,3 +1,4 @@
+// use parking_lot::Mutex;
 use std::sync::Mutex;
 
 use crate::{interface::sse::broadcaster::Broadcaster, prelude::*};
@@ -11,8 +12,6 @@ pub async fn user_login(login_data: web::Json<UserLogin>) -> impl Responder {
     match db_check_user(login_data.into_inner()) {
         Ok(data) => {
             info!("User: {:?} is logged in", data);
-            // web_state.lock().unwrap().update_state();
-
             HttpResponse::Ok().json(data)
         }
         Err(_) => {
@@ -81,6 +80,23 @@ pub async fn main_queue_leave(
     broadcast_agent: web::Data<Broadcaster>,
 ) -> impl Responder {
     info!("Attempted leaving: {:?}", user);
+    // let mut queue = main_queue.lock();
+    // let mut sub_queue = sub_queue.lock();
+    // let user = user.into_inner();
+    // // let removed_user = ;
+    // match queue.remove_user(user, &mut sub_queue) {
+    //     Ok(user) => {
+    //         broadcast_agent
+    //             .broadcast(&sub_queue, user.service_location)
+    //             .await;
+    //         HttpResponse::Ok().body(format!("Successfully removed: {}", user.national_id))
+    //     }
+    //     Err(err) => {
+    //         error!("ERROR: {}", err);
+    //         HttpResponse::NotFound().body(err)
+    //     }
+    // }
+
     match main_queue.lock() {
         Ok(mut queue) => {
             let user = user.into_inner();

@@ -132,3 +132,102 @@
 //     my_web_socket.collect_webState(web_state.lock().unwrap().clone());
 //     ws::start(my_web_socket, &req, stream)
 // }
+use std::{
+    sync::{mpsc::channel, Arc},
+    thread,
+    time::Duration,
+};
+
+use actix_web::rt::time::interval;
+use actix_web_lab::sse::{self, ChannelStream, Sse};
+use futures_util::future;
+use parking_lot::Mutex;
+
+use crate::prelude::*;
+
+pub struct Broadcaster {
+    inner: Mutex<BroadcasterInner>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct BroadcasterInner {
+    clients: Vec<sse::Sender>,
+}
+
+impl Broadcaster {
+    /// Constructs new broadcaster and spawns ping loop.
+    pub fn create() -> Arc<Self> {
+        let this = Arc::new(Broadcaster {
+            inner: Mutex::new(BroadcasterInner::default()),
+        });
+
+        Broadcaster::spawn_ping(Arc::clone(&this));
+
+        this
+    }
+
+    /// Pings clients every 10 seconds to see if they are alive and remove them from the broadcast
+    /// list if not.
+    fn spawn_ping(this: Arc<Self>) {
+        actix_web::rt::spawn(async move {
+            let mut interval = interval(Duration::from_secs(10));
+
+            loop {
+                interval.tick().await;
+                this.remove_stale_clients().await;
+            }
+        });
+    }
+
+    /// Removes all non-responsive clients from broadcast list.
+    async fn remove_stale_clients(&self) {
+        let clients = self.inner.lock().clients.clone();
+
+        let mut ok_clients = Vec::new();
+
+        for client in clients {
+            if client
+                .send(sse::Event::Comment("ping".into()))
+                .await
+                .is_ok()
+            {
+                ok_clients.push(client.clone());
+            }
+        }
+
+        self.inner.lock().clients = ok_clients;
+    }
+
+    /// Registers client with broadcaster, returning an SSE response body.
+    pub async fn new_client(&self, data: &Vec<UserQueuePos>) -> Sse<ChannelStream> {
+        let (tx, rx) = sse::channel(10);
+
+        tx.send(sse::Data::new_json(data).unwrap()).await.unwrap();
+
+        self.inner.lock().clients.push(tx);
+
+        rx
+    }
+
+    /// Broadcasts `msg` to all clients.
+    pub async fn broadcast_countdown(&self, user: &mut UserQueuePos) {
+        let clients = self.inner.lock().clients.clone();
+        let send_futures = clients.iter().map(|client| {
+            let new_time = user.startup_timer.clone();
+            let (tx, rx) = channel::<Duration>();
+            thread::spawn(move || {
+                for i in (0..=new_time.as_secs()).into_iter().rev() {
+                    thread::sleep(Duration::from_secs(1));
+                    tx.send(Duration::from_secs(i)).unwrap();
+                }
+            });
+            user.startup_timer = rx.try_recv().unwrap();
+            let user_channel_data = sse::Data::new_json(user).unwrap();
+            client.send(user_channel_data)
+        });
+
+        // try to send to all clients, ignoring failures
+        // disconnected clients will get swept up by `remove_stale_clients`
+        let _ = future::join_all(send_futures).await;
+    }
+}
