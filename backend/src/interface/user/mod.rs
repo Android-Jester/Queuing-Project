@@ -1,18 +1,19 @@
-pub mod cors;
-pub mod user_interface;
+pub mod activities;
+pub mod sse;
 pub mod prelude {
+    use crate::prelude::db_list_users;
 
-    pub use super::cors;
-    pub use super::user_interface::*;
+    pub use super::activities::*;
+    pub use super::sse::*;
     use crate::prelude::*;
-
-    pub fn user_config(cfg: &mut web::ServiceConfig) {
+    pub fn user_config(cfg: &mut ServiceConfig) {
         cfg.service(
-            web::scope("/user")
+            scope("/user")
                 .service(user_login)
                 .service(guest_login)
+                .service(list_users)
+                .service(show_countdowner)
                 .service(main_queue_join)
-                // .service()
                 .service(main_queue_leave),
         );
     }

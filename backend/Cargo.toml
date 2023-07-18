@@ -1,5 +1,5 @@
 [package]
-name = "queuing_server"
+name = "new_backend"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 actix-web = { version = "4.3.1" }
 actix-cors = { version = "0.6.4" }
+actix-web-lab = "0.19.1"
+env_logger = "0.10.0"
+log = "0.4.18"
 dotenvy = "0.15.7"
 diesel = { version = "2.1.0", features = [
     "mysql",
@@ -15,26 +18,11 @@ diesel = { version = "2.1.0", features = [
     "chrono",
     "serde_json",
 ] }
-
 randomforest = "0.1.6"
 serde = { version = "1.0.163", features = ["derive"] }
-chrono = { version = "0.4.26", features = ["serde"] }
-# simple-log = { version = "1.6.0" }
-tokio = { version = "1.28.2", features = ["full"] }
-tokio-stream = {version = "0.1.14"}
-async-std = "1.12.0"
-futures = "0.3.28"
-env_logger = "0.10.0"
-log = "0.4.18"
-ndarray = "0.15.6"
-actix-web-actors = "4.2.0"
 actix = "0.13.0"
-bytestring = { version = "1.3.0", features = ["serde"] }
-serde_json = "1.0.102"
-bincode = "1.3.3"
-reqwest = "0.11.18"
-websocket = "0.26.5"
-actix-web-lab = "0.19.1"
+chrono = { version = "0.4.26", features = ["serde"] }
 parking_lot = "0.12.1"
 futures-util = "0.3.28"
-serde_bytes = "0.11.12"
+bytestring = { version = "1.3.0", features = ["serde"] }
+
