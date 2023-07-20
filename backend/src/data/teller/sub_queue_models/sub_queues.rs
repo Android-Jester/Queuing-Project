@@ -89,24 +89,32 @@ impl SubQueues {
         };
 
         user_queue_data.setup_sub(sub_queue_position, /*service_location,*/ timer);
-        Self::timer_countdown(user_queue_data);
+        // Self::timer_countdown(user_queue_data);
     }
-    fn timer_countdown(user: &mut UserQueuePos) {
-        let (tx, rx) = std::sync::mpsc::channel::<Duration>();
-        let (tx_thread2, rx_thread2) = std::sync::mpsc::channel::<Duration>();
-        tx.send(user.startup_timer).unwrap();
-        std::thread::spawn(move || {
-            let startup = match rx.recv() {
-                Ok(timed_data) => timed_data.as_secs(),
-                Err(_) => 0,
-            };
-            for t in (0..=startup).rev() {
-                std::thread::sleep(Duration::from_secs(1));
-                tx_thread2.send(Duration::from_secs(t)).unwrap();
-            }
-        });
-        user.startup_timer = rx_thread2.recv().unwrap();
-    }
+    // fn timer_countdown(user: &mut UserQueuePos) {
+    //     let (tx, rx) = std::sync::mpsc::channel::<Duration>();
+    //     let (tx_thread2, rx_thread2) = std::sync::mpsc::channel::<Duration>();
+    //     tx.send(user.startup_timer).unwrap();
+    //     tokio::spawn(async move {
+    //         let startup = match rx.recv() {
+    //             Ok(timed_data) => timed_data.as_secs(),
+    //             Err(_) => 0,
+    //         };
+    //         for t in (0..=startup).rev() {
+    //             std::thread::sleep(Duration::from_secs(1));
+    //             info!("Timer T: {}", t);
+    //             match tx_thread2.send(Duration::from_secs(t)) {
+    //                 Ok(data) => {
+    //                     info!("Timer Sent: {}", t);
+    //                 }
+    //                 Err(err) => {
+    //                     info!("")
+    //                 }
+    //             }
+    //         }
+    //     });
+    //     user.startup_timer = rx_thread2.recv().unwrap();
+    // }
     fn sub_queue_realign(
         teller_data: &mut ServerQueue,
         old_sub_queue_position: usize,
@@ -128,18 +136,23 @@ impl SubQueues {
     }
     pub fn customer_add(&mut self, mut user: UserQueuePos) -> Result<(), String> {
         let teller = &mut self.tellers[user.service_location];
+
         match teller.teller.active {
             true => {
                 Self::customer_sub_queue_setup(teller, &mut user /*service_loc*/);
 
-                match teller.users.len() != usize::MAX {
+                match teller.users.len() < usize::MAX {
                     true => {
                         info!("User: {:?}", user);
                         teller.users.push(user.clone());
+
                         // Self::count_down_timer(user);
                         Ok(())
                     }
-                    false => Err("Unable to add customer".to_string()),
+                    false => {
+                        info!("Teller: {:?}", teller);
+                        Err("Unable to add customer".to_string())
+                    }
                 }
             }
             false => {
@@ -158,6 +171,8 @@ impl SubQueues {
                         false => Err("Unable to add customer".to_string()),
                     }
                 } else {
+                    info!("ERROR");
+
                     Err("Cannot add user".to_string())
                 }
             }

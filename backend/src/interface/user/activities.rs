@@ -29,10 +29,17 @@ pub async fn guest_login(guest: Json<GuestQuery>) -> impl Responder {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct JoinQuery {
+    pub national_id: String,
+    pub activity: String,
+}
+
 /// Users and guests can join the main queue and assigned tellers
-#[post("/join")]
+#[get("/join")]
 pub async fn main_queue_join(
-    user_input: Json<UserInputData>,
+    // user_input: Json<UserInputData>,
+    user_input: Query<UserInputData>,
     main_queue: Data<Mutex<MainQueue>>,
     sub_queues: Data<Mutex<SubQueues>>,
     broadcast_agent: Data<Broadcaster>,
@@ -47,28 +54,33 @@ pub async fn main_queue_join(
     //     tellers_service_times[data.teller.server_station as usize] = data.teller.service_time.as_secs_f64() / 60.0;
     // });
     // let prediction = prediction(tellers_service_times) as usize;
-
-    match main_queue.user_add(
+    // let user_input = UserInputData {
+    //     activity: query.activity.clone(),
+    //     national_id: query.national_id.clone(),
+    // };
+    info!("User Data: {:?}", user_input);
+    if let Ok(added_user) = main_queue.user_add(
         UserQueuePos::new(user_input.into_inner(), user_name, 0),
         &mut sub_queue,
     ) {
-        Ok(added_user) => {
-            info!("Successful Join");
-            broadcast_agent.broadcast_users(&sub_queue, 0).await;
-            broadcaster_agent2.broadcast_countdown(&added_user).await;
-            HttpResponse::Ok().json(added_user)
-        }
-        Err(e) => {
-            error!("ERROR: {}", e);
-            HttpResponse::NotFound().body(e)
-        }
+        info!("Successful Join");
+        broadcast_agent.broadcast_users(&sub_queue, 0).await;
+
+        broadcaster_agent2.new_client(&added_user).await
+        // HttpResponse::Ok().body("Hello Stream H")
+    } else {
+        info!("Hello");
+        broadcaster_agent2.error().await
+        // HttpResponse::Ok().body("Hello Stream H")
     }
 }
 
 #[get("/updatable")]
 pub async fn show_countdowner(broadcaster_agent2: Data<BroadcasterUser>) -> impl Responder {
-    info!("Logged To occur");
-    broadcaster_agent2.new_client().await
+    for i in 0..100 {
+        broadcaster_agent2.broadcast_countdown(i).await;
+    }
+    HttpResponse::Ok()
 }
 
 /// Removes user from the queue and resets the queue

@@ -33,13 +33,21 @@ impl MainQueue {
                 added_user.setup_main(user_position);
                 self.queue.push(added_user.clone());
                 match sub_queue.customer_add(added_user.clone()) {
-                    Ok(_) => Ok(added_user),
-                    Err(_) => Err("Unable to Assign User to a teller".to_string()),
+                    Ok(_) => {
+                        info!("User Added");
+                        Ok(added_user)
+                    }
+                    Err(_) => {
+                        error!("Unable to Assign User to a teller");
+                        Err("Unable to Assign User to a teller".to_string())
+                    }
                 }
             } else {
+                error!("Either No Teller Available or Queue is full");
                 Err("Either No Teller Available or Queue is full".to_string())
             }
         } else {
+            error!("User already In Queue");
             Err("User already In Queue".to_string())
         }
     }
@@ -48,7 +56,7 @@ impl MainQueue {
         user: UserQueuePos,
         servers: &'a mut SubQueues,
     ) -> Result<UserQueuePos, String> {
-        if self.queue.is_empty() {
+        if !self.queue.is_empty() {
             let removed_user = self.queue.remove(user.position);
             self.main_queue_realign(removed_user.position);
             servers.customer_remove(removed_user.clone());
@@ -68,10 +76,20 @@ impl MainQueue {
             .iter()
             .find(|user| user.national_id == national_id);
         if let Some(user) = user_found {
-            self.user_remove(user.clone(), servers);
-            Ok(())
+            match self.user_remove(user.clone(), servers) {
+                Ok(_) => Ok(()),
+                Err(_) => Err("User Not Found".to_string()),
+            }
         } else {
             Err("User Not Found".to_string())
         }
+    }
+
+    pub fn search_user(&self, national_id: String) -> UserQueuePos {
+        self.queue
+            .iter()
+            .find(|user| national_id == user.national_id)
+            .unwrap()
+            .clone()
     }
 }

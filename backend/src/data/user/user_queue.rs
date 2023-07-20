@@ -15,6 +15,7 @@ pub struct UserQueuePos {
     pub position: usize,
     pub sub_queue_position: usize,
     pub service_location: usize,
+    #[serde(skip_serializing)]
     pub startup_timer: Duration,
 }
 

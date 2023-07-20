@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{data_sources::queue, prelude::*};
 
 #[post("/dismiss")]
 pub async fn record_transaction(
@@ -59,16 +59,21 @@ pub async fn logout_teller(
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct RemoveUserQuery {
+    pub national_id: String,
+}
+
 #[post("/remove")]
 pub async fn remove_user(
-    user: Json<UserQueuePos>,
+    // user: Json<UserQueuePos>,
+    national_id: Query<RemoveUserQuery>,
     queue_data: Data<Mutex<MainQueue>>,
     server_queue: Data<Mutex<SubQueues>>,
 ) -> impl Responder {
-    match queue_data
-        .lock()
-        .user_remove(user.into_inner(), &mut server_queue.lock())
-    {
+    let mut queue = queue_data.lock();
+    let user = queue.search_user(national_id.national_id.clone());
+    match queue.user_remove(user, &mut server_queue.lock()) {
         Ok(_) => {
             info!("User Removed");
             HttpResponse::Ok().body("User Removed")
@@ -128,7 +133,7 @@ pub async fn login_teller(
                 server_station: sub_queue.teller_count() as i32,
                 active: true,
                 password: "".to_string(),
-                service_time: service_time as f32,
+                service_time: (service_time * 60.0) as f32,
             };
             let teller_acquired = sub_queue.teller_add(teller_info.clone());
             match teller_acquired {

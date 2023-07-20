@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use actix_web::rt::time::interval;
 use actix_web_lab::sse::{self, ChannelStream, Sse};
+use chrono::format::format;
 use std::time::Duration;
 
 pub struct BroadcasterUser {
@@ -59,19 +60,30 @@ impl BroadcasterUser {
     }
 
     /// Registers client with broadcaster, returning an SSE response body.
-    pub async fn new_client(&self) -> Sse<ChannelStream> {
+    pub async fn new_client(&self, added_user: &UserQueuePos) -> Sse<ChannelStream> {
         let (tx, rx) = sse::channel(10);
-        tx.send(sse::Data::new("Connected")).await.unwrap();
-        self.inner.lock().clients.push(tx);
+        info!("CALLED: {:?}", added_user);
+        if let Ok(user_data) = sse::Data::new_json(added_user) {
+            tx.send(user_data).await.unwrap();
+            self.inner.lock().clients.push(tx);
+        };
+        // tx.send(sse::Data::new_json("Connected")).await.unwrap();
         rx
     }
 
+    pub async fn error(&self) -> Sse<ChannelStream> {
+        let (tx, rx) = sse::channel(10);
+        tx.send(sse::Data::new("Error")).await.unwrap();
+        // self.inner.lock().clients.push(tx);
+        rx.with_keep_alive(Duration::from_secs(0))
+    }
+
     // Broadcasts `msg` to all clients.
-    pub async fn broadcast_countdown(&self, user: &UserQueuePos) {
+    pub async fn broadcast_countdown(&self, /*user: &UserQueuePos*/ data: usize) {
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
-            let user_channel_data = sse::Data::new_json(user.clone()).unwrap();
-            client.send(user_channel_data)
+            // let user_channel_data = sse::Data::new_json(user.clone()).unwrap();
+            client.send(sse::Data::new(data.to_string()))
         });
 
         // try to send to all clients, ignoring failures
