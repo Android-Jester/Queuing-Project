@@ -1,4 +1,11 @@
+use std::thread::{self, sleep};
+
 use crate::prelude::*;
+
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+pub struct SubQueues {
+    pub tellers: Vec<ServerQueue>,
+}
 
 /// Teller Activities
 impl SubQueues {
@@ -72,69 +79,72 @@ impl SubQueues {
 /// User Activities
 impl SubQueues {
     fn customer_sub_queue_setup(teller: &ServerQueue, user_queue_data: &mut UserQueuePos) {
-        // let teller = &self.tellers[service_location];
-        let sub_queue_position = teller.users.len() + 1;
+        let sub_queue_position = teller.users.len();
 
         let timer = match sub_queue_position {
-            1 => Duration::from_secs(0),
-            2..=CUSTOMER_COUNT => {
+            0 => 0usize,
+            1..=CUSTOMER_COUNT => {
                 let remaining_time = teller.users.first().unwrap().startup_timer;
-                Duration::from_secs_f64(
-                    ((teller.teller.service_time * 60.0) as f64
-                        * (sub_queue_position as f64 + 1.0))
-                        + remaining_time.as_secs() as f64,
-                )
+                warn!("Remaining Time: {}", remaining_time);
+                warn!("Teller Time: {}", teller.teller.service_time);
+                ((teller.teller.service_time) as usize * (sub_queue_position + 1)) + remaining_time
             }
-            _ => Duration::from_secs_f64((teller.teller.service_time * 60.0) as f64),
+            _ => 0,
         };
+        warn!("Timer: {}", timer);
 
         user_queue_data.setup_sub(sub_queue_position, /*service_location,*/ timer);
         // Self::timer_countdown(user_queue_data);
     }
-    // fn timer_countdown(user: &mut UserQueuePos) {
-    //     let (tx, rx) = std::sync::mpsc::channel::<Duration>();
-    //     let (tx_thread2, rx_thread2) = std::sync::mpsc::channel::<Duration>();
-    //     tx.send(user.startup_timer).unwrap();
-    //     tokio::spawn(async move {
-    //         let startup = match rx.recv() {
-    //             Ok(timed_data) => timed_data.as_secs(),
-    //             Err(_) => 0,
-    //         };
-    //         for t in (0..=startup).rev() {
-    //             std::thread::sleep(Duration::from_secs(1));
-    //             info!("Timer T: {}", t);
-    //             match tx_thread2.send(Duration::from_secs(t)) {
-    //                 Ok(data) => {
-    //                     info!("Timer Sent: {}", t);
-    //                 }
-    //                 Err(err) => {
-    //                     info!("")
-    //                 }
-    //             }
-    //         }
-    //     });
-    //     user.startup_timer = rx_thread2.recv().unwrap();
-    // }
+
+    pub async fn timer_countdown<'a>(
+        &mut self,
+        ip: String,
+        index: usize,
+        teller_station: usize,
+        broadcast: Data<BroadcasterUser>,
+    ) {
+        let (tx, rx) = std::sync::mpsc::channel::<UserQueuePos>();
+        info!("SPAWNED: TELLER_STATION: {}", teller_station);
+        info!("SPAWNED: USER POSITION: {}", index);
+        let teller_queue = &mut self.tellers[teller_station].users;
+        let user = &mut teller_queue[index];
+        info!("USSSERRR: {:?}", user);
+        let user_time = user.startup_timer;
+        tx.send(user.clone()).unwrap();
+        tokio::spawn(async move {
+            info!("SPAWNED IN");
+            warn!("User Time: {}", user_time);
+            let mut user_data = rx.recv().unwrap();
+            for index in (0..=user_time).rev() {
+                sleep(Duration::from_secs(1));
+                user_data.startup_timer = index;
+                info!("Index: {}", index);
+                broadcast.broadcast_countdown(&user_data, ip.clone()).await;
+            }
+        });
+    }
+
+    fn queue_rejoin(&self, user: UserQueuePos) {}
+
     fn sub_queue_realign(
         teller_data: &mut ServerQueue,
         old_sub_queue_position: usize,
-        remaining_time: Duration,
+        remaining_time: usize,
     ) {
         // self.tellers[service_location].users.iter_mut()
         // let teller_data = &mut self.tellers[service_location];
         //TODO: Change the sub_queue_position of all users after the removed user
         for (position, user) in teller_data.users.iter_mut().enumerate() {
             if user.sub_queue_position > old_sub_queue_position {
-                let timer = Duration::from_secs_f32(
-                    (teller_data.teller.service_time * (position as f32 + 1.0))
-                        + remaining_time.as_secs_f32(),
-                );
+                let timer = (teller_data.teller.service_time * (position as f32 + 1.0)) as usize
+                    + remaining_time;
                 user.startup_timer = timer;
                 user.sub_queue_position = position;
             }
         }
     }
-    pub fn customer_add(&mut self, mut user: UserQueuePos) -> Result<(), String> {
+    pub fn customer_add(&mut self, mut user: UserQueuePos) -> Result<UserQueuePos, String> {
         let teller = &mut self.tellers[user.service_location];
 
         match teller.teller.active {
@@ -143,11 +153,9 @@ impl SubQueues {
 
                 match teller.users.len() < usize::MAX {
                     true => {
-                        info!("User: {:?}", user);
                         teller.users.push(user.clone());
-
-                        // Self::count_down_timer(user);
-                        Ok(())
+                        info!("Users: {:?}", teller.users);
+                        Ok(user)
                     }
                     false => {
                         info!("Teller: {:?}", teller);
@@ -166,7 +174,7 @@ impl SubQueues {
                             info!("User: {:?}", user);
                             teller.users.push(user.clone());
                             // Self::count_down_timer(user);
-                            Ok(())
+                            Ok(user)
                         }
                         false => Err("Unable to add customer".to_string()),
                     }

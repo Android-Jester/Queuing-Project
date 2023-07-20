@@ -44,8 +44,10 @@ pub async fn main_queue_join(
     sub_queues: Data<Mutex<SubQueues>>,
     broadcast_agent: Data<Broadcaster>,
     broadcaster_agent2: Data<BroadcasterUser>,
+    req: actix_web::HttpRequest,
 ) -> impl Responder {
     // let sub_queue = sub_queues.lock().unwrap();
+    let peer_id = req.peer_addr().unwrap().ip().to_string();
     let user_name = db_find_user(user_input.national_id.clone()).unwrap().name;
     let mut sub_queue = sub_queues.lock();
     let mut main_queue = main_queue.lock();
@@ -65,8 +67,8 @@ pub async fn main_queue_join(
     ) {
         info!("Successful Join");
         broadcast_agent.broadcast_users(&sub_queue, 0).await;
-
-        broadcaster_agent2.new_client(&added_user).await
+        info!("DDDD: {:?}", added_user);
+        broadcaster_agent2.new_client(&added_user, peer_id).await
         // HttpResponse::Ok().body("Hello Stream H")
     } else {
         info!("Hello");
@@ -76,10 +78,27 @@ pub async fn main_queue_join(
 }
 
 #[get("/updatable")]
-pub async fn show_countdowner(broadcaster_agent2: Data<BroadcasterUser>) -> impl Responder {
-    for i in 0..100 {
-        broadcaster_agent2.broadcast_countdown(i).await;
-    }
+pub async fn show_countdowner(
+    query: Query<UserInputData>,
+    queue: Data<Mutex<SubQueues>>,
+    main_queue: Data<Mutex<MainQueue>>,
+    broadcaster_agent2: Data<BroadcasterUser>,
+    req: actix_web::HttpRequest,
+) -> impl Responder {
+    let peer_id = req.peer_addr().unwrap().ip().to_string();
+    let mut main_queue = main_queue.lock();
+    let mut user_queue = queue.lock();
+    let user = main_queue.search_user(query.national_id.clone());
+    warn!("USER BEFORE LOOP: {:?}", user);
+    user_queue
+        .timer_countdown(
+            peer_id,
+            user.sub_queue_position,
+            user.service_location,
+            broadcaster_agent2,
+        )
+        .await;
+
     HttpResponse::Ok()
 }
 

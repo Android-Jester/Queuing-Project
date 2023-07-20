@@ -28,14 +28,13 @@ impl MainQueue {
         if existing_user.is_none() {
             // TODO: Make it such that it starts from 1 not 0
             let user_position = self.queue.len();
-            info!("User Position: {}", user_position);
             if user_position < CUSTOMER_COUNT && sub_queue.teller_count() > 0 {
                 added_user.setup_main(user_position);
-                self.queue.push(added_user.clone());
                 match sub_queue.customer_add(added_user.clone()) {
-                    Ok(_) => {
+                    Ok(user_dd) => {
                         info!("User Added");
-                        Ok(added_user)
+                        self.queue.push(user_dd.clone());
+                        Ok(user_dd)
                     }
                     Err(_) => {
                         error!("Unable to Assign User to a teller");
@@ -85,11 +84,10 @@ impl MainQueue {
         }
     }
 
-    pub fn search_user(&self, national_id: String) -> UserQueuePos {
+    pub fn search_user(&mut self, national_id: String) -> &UserQueuePos {
         self.queue
-            .iter()
+            .iter_mut()
             .find(|user| national_id == user.national_id)
             .unwrap()
-            .clone()
     }
 }

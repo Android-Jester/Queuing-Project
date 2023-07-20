@@ -1,4 +1,4 @@
-use crate::{data_sources::queue, prelude::*};
+use crate::prelude::*;
 
 #[post("/dismiss")]
 pub async fn record_transaction(
@@ -72,7 +72,7 @@ pub async fn remove_user(
     server_queue: Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     let mut queue = queue_data.lock();
-    let user = queue.search_user(national_id.national_id.clone());
+    let user = queue.search_user(national_id.national_id.clone()).clone();
     match queue.user_remove(user, &mut server_queue.lock()) {
         Ok(_) => {
             info!("User Removed");
