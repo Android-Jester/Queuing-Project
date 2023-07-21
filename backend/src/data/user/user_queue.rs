@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use std::time::Duration;
 
 #[derive(Deserialize, Debug)]
 pub struct UserInputData {
@@ -14,7 +15,8 @@ pub struct UserQueuePos {
     pub position: usize,
     pub sub_queue_position: usize,
     pub service_location: usize,
-    pub startup_timer: usize,
+    #[serde(skip_serializing)]
+    pub startup_timer: Duration,
 }
 
 impl UserQueuePos {
@@ -24,7 +26,7 @@ impl UserQueuePos {
             position: 0,
             sub_queue_position: 0,
             service_location,
-            startup_timer: 0,
+            startup_timer: Duration::from_secs(0),
             activity: user_input.activity,
             national_id: user_input.national_id,
         }
@@ -47,9 +49,8 @@ impl UserQueuePos {
         self.position = position;
     }
 
-    pub fn setup_sub(&mut self, sub_queue_position: usize, startup_timer: usize) {
+    pub fn setup_sub(&mut self, sub_queue_position: usize, startup_timer: Duration) {
         self.sub_queue_position = sub_queue_position;
         self.startup_timer = startup_timer;
-        warn!("AFTER SETUP: {:?}", self);
     }
 }

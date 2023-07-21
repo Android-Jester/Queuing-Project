@@ -76,7 +76,7 @@ impl Broadcaster {
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
             let json = sse::Data::new_json(sub_queue.teller_show_queue(service_location)).unwrap();
-            info!("Teller JSON: {:?}", json);
+            info!("JSON: {:?}", json);
             client.send(json)
         });
 
