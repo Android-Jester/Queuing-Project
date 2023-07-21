@@ -1,4 +1,4 @@
-use std::thread::{self, sleep};
+use std::thread::sleep;
 
 use crate::prelude::*;
 
@@ -105,27 +105,40 @@ impl SubQueues {
         broadcast: Data<BroadcasterUser>,
     ) {
         let (tx, rx) = std::sync::mpsc::channel::<UserQueuePos>();
-        info!("SPAWNED: TELLER_STATION: {}", teller_station);
-        info!("SPAWNED: USER POSITION: {}", index);
+        let (tx_thread, rx_thread) = std::sync::mpsc::channel::<UserQueuePos>();
         let teller_queue = &mut self.tellers[teller_station].users;
         let user = &mut teller_queue[index];
-        info!("USSSERRR: {:?}", user);
-        let user_time = user.startup_timer;
-        tx.send(user.clone()).unwrap();
+        let temp_user = UserQueuePos::new_fill(user.clone());
+        tx.send(temp_user).unwrap();
         tokio::spawn(async move {
             info!("SPAWNED IN");
-            warn!("User Time: {}", user_time);
             let mut user_data = rx.recv().unwrap();
-            for index in (0..=user_time).rev() {
+            while user_data.startup_timer != 0 {
                 sleep(Duration::from_secs(1));
-                user_data.startup_timer = index;
-                info!("Index: {}", index);
+                user_data.startup_timer -= 1;
+                info!("Index: {}", user_data.startup_timer);
                 broadcast.broadcast_countdown(&user_data, ip.clone()).await;
+                match tx_thread.send(user_data.clone()) {
+                    Ok(_) => {
+                        info!("Successful");
+                    }
+                    Err(err) => {
+                        error!("ERROR: {:?}", err)
+                    }
+                }
             }
         });
+        match rx_thread.recv() {
+            Ok(dd) => {
+                let temp_data = dd;
+                info!("SS: {:?}", temp_data);
+                user.replace_fill(temp_data);
+            }
+            Err(err) => {
+                error!("ERROR: {:?}", err);
+            }
+        }
     }
-
-    fn queue_rejoin(&self, user: UserQueuePos) {}
 
     fn sub_queue_realign(
         teller_data: &mut ServerQueue,

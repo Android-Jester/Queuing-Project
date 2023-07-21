@@ -84,10 +84,15 @@ impl MainQueue {
         }
     }
 
-    pub fn search_user(&mut self, national_id: String) -> &UserQueuePos {
+    pub fn search_user(&self, national_id: String) -> Option<&UserQueuePos> {
+        self.queue
+            .iter()
+            .find(|user| national_id == user.national_id)
+    }
+
+    pub fn search_user_mut(&mut self, national_id: String) -> Option<&mut UserQueuePos> {
         self.queue
             .iter_mut()
             .find(|user| national_id == user.national_id)
-            .unwrap()
     }
 }

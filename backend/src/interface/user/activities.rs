@@ -68,7 +68,10 @@ pub async fn main_queue_join(
         info!("Successful Join");
         broadcast_agent.broadcast_users(&sub_queue, 0).await;
         info!("DDDD: {:?}", added_user);
-        broadcaster_agent2.new_client(&added_user, peer_id).await
+        broadcaster_agent2
+            .new_client(&added_user, peer_id)
+            // &mut sub_queue, &broadcaster_agent2)
+            .await
         // HttpResponse::Ok().body("Hello Stream H")
     } else {
         info!("Hello");
@@ -88,7 +91,7 @@ pub async fn show_countdowner(
     let peer_id = req.peer_addr().unwrap().ip().to_string();
     let mut main_queue = main_queue.lock();
     let mut user_queue = queue.lock();
-    let user = main_queue.search_user(query.national_id.clone());
+    let user = main_queue.search_user(query.national_id.clone()).unwrap();
     warn!("USER BEFORE LOOP: {:?}", user);
     user_queue
         .timer_countdown(

@@ -29,6 +29,19 @@ impl UserQueuePos {
             national_id: user_input.national_id,
         }
     }
+    pub fn new_fill(user: UserQueuePos) -> Self {
+        Self { ..user }
+    }
+
+    pub fn replace_fill(&mut self, user: UserQueuePos) {
+        info!("CALLED REPLACED");
+        self.activity = user.activity;
+        self.name = user.name;
+        self.position = user.position;
+        self.sub_queue_position = user.sub_queue_position;
+        self.startup_timer = user.startup_timer;
+        self.national_id = user.national_id;
+    }
 
     pub fn setup_main(&mut self, position: usize) {
         self.position = position;

@@ -1,10 +1,9 @@
-use actix_web::{middleware, web, web::Data, App, HttpServer};
 use new_backend::prelude::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    log::info!(
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+    info!(
         "Web Server started at http://{}:3000",
         Ipv4Addr::UNSPECIFIED
     );
@@ -25,7 +24,6 @@ async fn main() -> std::io::Result<()> {
             .app_data(queue_data_sub.clone())
             .app_data(web::Data::from(Arc::clone(&broadcast_teller_lists)))
             .app_data(web::Data::from(Arc::clone(&broadcast_countdown)))
-            // .service(list_users)
             .configure(teller_config) /* Teller Actions */
             .configure(user_config) /* User Actions */
     })

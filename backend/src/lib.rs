@@ -1,3 +1,4 @@
+extern crate log;
 pub mod consts;
 pub mod data;
 pub mod data_sources;
@@ -12,6 +13,11 @@ pub mod prelude {
     pub use std::{net::Ipv4Addr, sync::Arc};
 
     // Imports from other packages
+    pub use actix_web::{
+        self, middleware,
+        web::{self, *},
+        App, HttpServer,
+    };
     pub use log::*;
-    pub use serde::{Deserialize, Serialize};
+    pub use serde::{self, *};
 }

@@ -71,12 +71,18 @@ impl BroadcasterUser {
     }
 
     /// Registers client with broadcaster, returning an SSE response body.
-    pub async fn new_client(&self, added_user: &UserQueuePos, ip: String) -> Sse<ChannelStream> {
+    pub async fn new_client(
+        &self,
+        added_user: &UserQueuePos,
+        ip: String,
+        // queue: &mut SubQueues,
+        // broadcaster: &Data<BroadcasterUser>,
+    ) -> Sse<ChannelStream> {
         let (tx, rx) = sse::channel(10);
         info!("CALLED: {:?}", added_user);
         if let Ok(user_data) = sse::Data::new_json(added_user) {
             tx.send(user_data).await.unwrap();
-            let client = Client::new(ip, tx);
+            let client = Client::new(ip.clone(), tx);
             self.inner.lock().clients.push(client);
         };
         rx
