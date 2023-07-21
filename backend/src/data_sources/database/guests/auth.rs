@@ -3,7 +3,7 @@ use crate::prelude::*;
 pub fn db_add_guest(insert_data: GuestQuery) -> Result<GuestQuery, &'static str> {
     let conn = &mut establish_connection();
     match conn.transaction(|conn| {
-        diesel::insert_into(Guests::dsl::Guests)
+        diesel::insert_into(Guests_Clients::dsl::Guests_Clients)
             .values(insert_data.clone())
             .execute(conn)
     }) {

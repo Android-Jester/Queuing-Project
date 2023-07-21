@@ -1,4 +1,3 @@
-extern crate log;
 pub mod consts;
 pub mod data;
 pub mod data_sources;
@@ -14,9 +13,9 @@ pub mod prelude {
 
     // Imports from other packages
     pub use actix_web::{
-        self, middleware,
+        self, get, middleware, post,
         web::{self, *},
-        App, HttpServer,
+        App, HttpRequest, HttpResponse, HttpServer, Responder,
     };
     pub use log::*;
     pub use serde::{self, *};

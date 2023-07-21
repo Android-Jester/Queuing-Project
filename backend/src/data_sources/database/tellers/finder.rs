@@ -1,11 +1,22 @@
 use crate::prelude::*;
+pub fn db_list_tellers() -> Result<Vec<ServerQuery>, &'static str> {
+    let conn = &mut establish_connection();
+    match conn.transaction(|connection| {
+        Servers::dsl::Servers
+            .select(ServerQuery::as_select())
+            .load(connection)
+    }) {
+        Ok(transactions) => Ok(transactions),
+        Err(_) => Err("Unable to find transactions"),
+    }
+}
 
 // TODO: Fix this function to return model that doesn't contain password
-pub fn find_teller(teller_id: String) -> Result<TellerQuery, &'static str> {
+pub fn find_teller(teller_id: String) -> Result<ServerQuery, &'static str> {
     let conn = &mut establish_connection();
     let transactions_data = conn.transaction(|connection| {
-        Tellers::dsl::Tellers
-            .select(TellerQuery::as_select())
+        Servers::dsl::Servers
+            .select(ServerQuery::as_select())
             .find(teller_id)
             .first(connection)
     });
@@ -13,13 +24,4 @@ pub fn find_teller(teller_id: String) -> Result<TellerQuery, &'static str> {
         Ok(teller) => Ok(teller),
         Err(_) => Err("Unable to Find Telle"),
     }
-}
-
-pub fn set_teller_status(status: bool, teller_id: String) -> Result<usize, diesel::result::Error> {
-    let conn = &mut establish_connection();
-    conn.transaction(|connection| {
-        diesel::update(Tellers::dsl::Tellers.find(teller_id))
-            .set(Tellers::active.eq(status))
-            .execute(connection)
-    })
 }

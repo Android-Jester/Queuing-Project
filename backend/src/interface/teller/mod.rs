@@ -1,8 +1,13 @@
-pub mod activities;
-pub mod sse;
+pub mod actions;
+pub mod auth;
+pub mod deletables;
+pub mod server_event;
+
 pub mod prelude {
-    pub use super::activities::*;
-    pub use super::sse::*;
+    pub use super::actions::*;
+    pub use super::auth::*;
+    pub use super::deletables::*;
+    pub use super::server_event::*;
     use crate::prelude::*;
     pub fn teller_config(conf: &mut ServiceConfig) {
         conf.service(

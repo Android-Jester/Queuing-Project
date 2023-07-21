@@ -1,27 +1,23 @@
-pub mod activities;
-pub mod sse;
-pub mod prelude {
-    use crate::prelude::db_list_users;
+pub mod actions;
+pub mod auth;
+pub mod client_event;
+pub mod deletable;
 
-    pub use super::activities::*;
-    pub use super::sse::*;
+pub mod prelude {
+    pub use super::actions::*;
+    pub use super::auth::*;
+    pub use super::client_event::*;
+    pub use super::deletable::*;
     use crate::prelude::*;
     pub fn user_config(cfg: &mut ServiceConfig) {
         cfg.service(
             scope("/user")
                 .service(user_login)
                 .service(guest_login)
-                .service(list_users)
+                .service(client_listings)
+                .service(show_countdowner)
                 .service(main_queue_join)
                 .service(main_queue_leave),
         );
-    }
-
-    #[get("/")]
-    pub async fn list_users() -> impl Responder {
-        match db_list_users() {
-            Ok(users) => HttpResponse::Ok().json(users),
-            Err(err) => HttpResponse::BadRequest().body(err),
-        }
     }
 }

@@ -1,4 +1,3 @@
-use log::info;
 use randomforest::criterion::Gini;
 use randomforest::table::TableBuilder;
 use randomforest::{RandomForestClassifier, RandomForestClassifierOptions};

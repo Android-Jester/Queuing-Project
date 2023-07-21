@@ -1,52 +1,9 @@
 // @generated automatically by Diesel CLI.
-diesel::table! {
-#[allow(non_snake_case)]
-    Guests (national_id) {
-        #[max_length = 15]
-        national_id -> Varchar,
-        name -> Text,
-        #[max_length = 12]
-        transaction_type -> Varchar,
-        #[max_length = 10]
-        telephone_num -> Varchar,
-    }
-}
 
 diesel::table! {
-#[allow(non_snake_case)]
-
-    Tellers (server_id) {
-        #[max_length = 255]
-        server_id -> Varchar,
-        server_station -> Integer,
-        service_time -> Float,
-        active -> Bool,
-        #[max_length = 16]
-        password -> Varchar,
-    }
-}
-
-diesel::table! {
-#[allow(non_snake_case)]
-
-    Transactions (id) {
+    #[allow(non_snake_case)]
+    Clients (id) {
         id -> Integer,
-        #[max_length = 255]
-        transaction_detail -> Varchar,
-        #[max_length = 255]
-        server_id -> Varchar,
-        #[max_length = 15]
-        national_id -> Nullable<Varchar>,
-        duration -> Float,
-        transaction_time -> Timestamp,
-    }
-}
-
-diesel::table! {
-#[allow(non_snake_case)]
-
-    Users (user_id) {
-        user_id -> Integer,
         name -> Text,
         #[max_length = 255]
         account_number -> Varchar,
@@ -57,6 +14,45 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(Transactions -> Tellers (server_id));
+diesel::table! {
+    #[allow(non_snake_case)]
+    Guests_Clients (national_id) {
+        #[max_length = 15]
+        national_id -> Varchar,
+        name -> Text,
+        transaction_detail -> Text,
+        telephone_num -> Text,
+    }
+}
 
-diesel::allow_tables_to_appear_in_same_query!(Guests, Tellers, Transactions, Users,);
+diesel::table! {
+    #[allow(non_snake_case)]
+    Servers (server_id) {
+        #[max_length = 255]
+        server_id -> Varchar,
+        station -> Integer,
+        service_time -> Integer,
+        #[max_length = 16]
+        password -> Varchar,
+        active -> Bool,
+    }
+}
+
+diesel::table! {
+    #[allow(non_snake_case)]
+    Transactions (id) {
+        id -> Integer,
+        #[max_length = 255]
+        detail -> Varchar,
+        #[max_length = 255]
+        server_id -> Varchar,
+        #[max_length = 15]
+        client_national_id -> Varchar,
+        duration -> Float,
+        created_date -> Timestamp,
+    }
+}
+
+diesel::joinable!(Transactions -> Servers (server_id));
+
+diesel::allow_tables_to_appear_in_same_query!(Clients, Guests_Clients, Servers, Transactions,);
