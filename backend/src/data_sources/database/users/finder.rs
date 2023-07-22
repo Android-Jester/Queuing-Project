@@ -7,7 +7,7 @@ pub fn db_find_user(national_id: String) -> Result<ClientQuery, &'static str> {
             .filter(Clients::national_id.eq(national_id))
             .first(connection)
     }) {
-        Ok(teller) => Ok(teller),
+        Ok(client) => Ok(client),
         Err(_) => Err("Unable to Find User"),
     }
 }

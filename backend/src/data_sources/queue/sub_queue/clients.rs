@@ -3,10 +3,10 @@ use crate::prelude::*;
 use super::servers::ServerQueue;
 impl super::prelude::SubQueues {
     fn customer_sub_queue_setup(server: &ServerQueue, user_queue_data: &mut ClientQueueData) {
-        let sub_queue_position = server.users.len() + 1;
+        let sub_queue_position = server.users.len();
         let timer = match sub_queue_position {
-            1 => 0,
-            2..=CUSTOMER_COUNT => {
+            0 => 0,
+            1..=CUSTOMER_COUNT => {
                 let remaining_time = server.users.first().unwrap().startup_timer;
 
                 (server.teller.service_time as usize * (sub_queue_position + 1)) + remaining_time
@@ -25,26 +25,36 @@ impl super::prelude::SubQueues {
         broadcast: Data<ClientBroadcaster>,
     ) {
         let (tx, rx) = std::sync::mpsc::channel::<ClientQueueData>();
+        let (tx_2, rx_2) = std::sync::mpsc::channel::<ClientQueueData>();
         info!("SPAWNED: TELLER_STATION: {}", teller_station);
         info!("SPAWNED: USER POSITION: {}", index);
-        let teller_queue = &mut self.tellers[teller_station].users;
-        let user = &mut teller_queue[index];
+        let user = &mut self.tellers[teller_station].users[index];
         info!("USSSERRR: {:?}", user);
         let user_time = user.startup_timer;
         tx.send(user.clone()).unwrap();
         tokio::spawn(async move {
             info!("SPAWNED IN");
             warn!("User Time: {:?}", user_time);
+            info!("Client IP: {}", client_ip);
             let mut user_data = rx.recv().unwrap();
             for index in (0..=user_time).rev() {
                 std::thread::sleep(Duration::from_secs(1));
                 user_data.startup_timer = index;
                 info!("Index: {}", index);
+                // tx_2.send(user_data.clone()).unwrap();
                 broadcast
                     .broadcast_countdown(&user_data, client_ip.clone())
                     .await;
             }
         });
+        // match rx_2.recv() {
+        //     Ok(data) => {
+        //         user.replace_fill(data);
+        //     },
+        //     Err(e) => {
+        //         error!("Replace Error: {:?}", e);
+        //     },
+        // }
     }
 
     fn sub_queue_realign(
@@ -62,7 +72,7 @@ impl super::prelude::SubQueues {
             }
         }
     }
-    pub fn customer_add(&mut self, mut user: ClientQueueData) -> Result<(), String> {
+    pub fn customer_add(&mut self, mut user: ClientQueueData) -> Result<ClientQueueData, String> {
         let teller = &mut self.tellers[user.service_location];
 
         match teller.teller.active {
@@ -71,11 +81,9 @@ impl super::prelude::SubQueues {
 
                 match teller.users.len() < usize::MAX {
                     true => {
-                        info!("User: {:?}", user);
                         teller.users.push(user.clone());
-
-                        // Self::count_down_timer(user);
-                        Ok(())
+                        info!("User After ADD: {:?}", user);
+                        Ok(user)
                     }
                     false => {
                         info!("Teller: {:?}", teller);
@@ -91,10 +99,9 @@ impl super::prelude::SubQueues {
                     Self::customer_sub_queue_setup(teller, &mut user);
                     match teller.users.len() != usize::MAX {
                         true => {
-                            info!("User: {:?}", user);
                             teller.users.push(user.clone());
-                            // Self::count_down_timer(user);
-                            Ok(())
+                            info!("User ADDED: {:?}", user);
+                            Ok(user)
                         }
                         false => Err("Unable to add customer".to_string()),
                     }

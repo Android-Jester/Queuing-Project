@@ -53,7 +53,7 @@ pub async fn remove_user(
 
 #[derive(Deserialize)]
 pub struct ServerQueueQuery {
-    teller_loc: usize,
+    teller_position: usize,
 }
 
 #[get("/queue")]
@@ -64,8 +64,7 @@ pub async fn user_queues(
     server_broadcaster: Data<ServerBroadcaster>,
 ) -> impl Responder {
     let queue = server_queues.lock();
-    let json_data = queue.teller_show_queue(teller_loc.teller_loc);
-    info!("Data: {:?}", json_data);
+    let json_data = queue.teller_show_queue(teller_loc.teller_position);
     server_broadcaster
         .new_client(req.peer_addr().unwrap().ip().to_string(), &json_data)
         .await

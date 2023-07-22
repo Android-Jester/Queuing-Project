@@ -1,5 +1,5 @@
 use crate::prelude::*;
-#[get("/")]
+#[get("")]
 pub async fn client_listings() -> impl Responder {
     match db_list_clients() {
         Ok(users) => HttpResponse::Ok().json(users),

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[get("/")]
+#[get("")]
 pub async fn tellers_listing() -> impl Responder {
     match db_list_tellers() {
         Ok(users) => HttpResponse::Ok().json(users),

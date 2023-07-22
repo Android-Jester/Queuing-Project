@@ -2,7 +2,8 @@ use backend::prelude::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    // env_logger::init();
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     info!(
         "Web Server started at http://{}:3000",
         std::net::Ipv4Addr::UNSPECIFIED
@@ -20,7 +21,7 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin();
         App::new()
             .wrap(cors)
-            .wrap(middleware::Logger::default())
+            // .wrap(middleware::Logger::default())
             .app_data(queue_data_main.clone())
             .app_data(queue_data_sub.clone())
             .app_data(Data::from(Arc::clone(&broadcast_teller_lists)))

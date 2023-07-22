@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, data_sources::queue::sub_queue};
 use actix_web::rt::time::interval;
 use actix_web_lab::sse::{self, ChannelStream, Sse};
 use std::time::Duration;
@@ -72,11 +72,20 @@ impl ClientBroadcaster {
     }
 
     /// Registers client with broadcaster, returning an SSE response body.
-    pub async fn new_client(&self, added_user: &ClientQueueData, ip: String) -> Sse<ChannelStream> {
+    pub async fn new_client(&self, added_user: &ClientQueueData, ip: String, sub_queue: &mut SubQueues, broadcaster: Data<ClientBroadcaster>) -> Sse<ChannelStream> {
+        warn!("CLIENT DATA: {:?}", added_user);
         let (tx, rx) = sse::channel(10);
         if let Ok(user_data) = sse::Data::new_json(added_user) {
             tx.send(user_data).await.unwrap();
-            self.inner.lock().clients.push(Client::new(ip, tx));
+            self.inner.lock().clients.push(Client::new(ip.clone(), tx));
+            sub_queue
+            .timer_countdown(
+                ip,
+                added_user.sub_queue_position,
+                added_user.service_location,
+                broadcaster,
+            )
+            .await;
         };
         rx
     }
@@ -90,6 +99,7 @@ impl ClientBroadcaster {
 
     // Broadcasts `msg` to all clients.
     pub async fn broadcast_countdown(&self, user: &ClientQueueData, ip: String) {
+        info!("Called");
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
             if client.ip == ip {
