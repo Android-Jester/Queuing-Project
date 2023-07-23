@@ -4,5 +4,5 @@ commit="${date}"
 # echo "$commit"
 
 git add --all;
-git commit -am commit;
+commit | git commit -am -;
 git push origin main;
