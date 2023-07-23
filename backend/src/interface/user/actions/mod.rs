@@ -17,8 +17,12 @@ pub async fn main_queue_join(
 ) -> impl Responder {
     let national_id = user_input.national_id.clone();
     let user_name = db_find_user(national_id.clone()).unwrap().name;
+    let main_queues = main_queue.into_inner();
+    let sub_queues = sub_queues.into_inner();
+    let server_broadcast = server_broadcast.into_inner();
+    let client_broadcast = client_broadcast.into_inner();
     let mut sub_queue = sub_queues.lock();
-    let mut main_queue = main_queue.lock();
+    let mut main_queue = main_queues.lock();
     let user_queue_input = user_input.into_inner();
     // let mut tellers_service_times:[f64; SERVER_COUNT] = [0.0; SERVER_COUNT];
     // let _ = sub_queue.tellers.iter().map(|data| {
@@ -33,57 +37,37 @@ pub async fn main_queue_join(
         ClientQueueData::new(user_queue_input, user_name, 0),
         &mut sub_queue,
     ) {
-        let added_user = added_user.lock();
-        server_broadcast.user_update(&sub_queue, 0).await;
-        let ip = national_id;
+        info!("SERVER QUEUE: {:?}", sub_queue);
+        let added_user = added_user;
 
-        client_broadcast.new_client(&added_user, ip, &mut sub_queue, client_broadcast.clone()).await
+        client_broadcast.new_client(&added_user, national_id, &mut sub_queue, client_broadcast.clone(), server_broadcast.clone()).await
     } else {
         client_broadcast.error().await
     }
 }
 
-#[get("/updatable")]
-pub async fn show_countdowner(
-    query: Query<ClientInputData>,
-    req: HttpRequest,
-    main_queue: Data<Mutex<MainQueue>>,
-    sub_queue: Data<Mutex<SubQueues>>,
-    client_broadcaster: Data<ClientBroadcaster>,
-) -> impl Responder {
-    let ip = req.peer_addr().unwrap().ip();
-    let mut sub_queue = sub_queue.lock();
-    let unwrapped_user = main_queue.lock().search_user(query.national_id.clone()).unwrap();
-    let user = unwrapped_user.lock();
-    sub_queue
-        .timer_countdown(
-            ip.to_string(),
-            user.sub_queue_position,
-            user.service_location,
-            client_broadcaster.into_inner(),
-        )
-        .await;
-    HttpResponse::Ok()
-}
+
 
 /// Removes user from the queue and resets the queue
 #[post("/leave")]
 pub async fn main_queue_leave(
-    user: Json<ClientQueueData>,
-    main_queue: Data<Mutex<MainQueue>>,
-    sub_queue: Data<Mutex<SubQueues>>,
+    user: Json<JoinQuery>,
+    main_queues: Data<Mutex<MainQueue>>,
+    sub_queues: Data<Mutex<SubQueues>>,
     server_broadcaster: Data<ServerBroadcaster>,
 ) -> impl Responder {
-    let user = Arc::new(Mutex::new(user.into_inner()));
-    let mut main_queue = main_queue.lock();
-    let mut sub_queue = sub_queue.lock();
-    let removed_user = main_queue.user_remove(user.clone(), &mut sub_queue);
-    match removed_user {
-        Ok(removed_user) => {
+    let user = user.into_inner();
+    let sub_queues = sub_queues.into_inner();
+    let main_queues = main_queues.into_inner();
+    let mut main_queue = main_queues.lock();
+    let mut sub_queue = sub_queues.lock();
+    let removed_user_teller = main_queue.user_remove(user.national_id, &mut sub_queue);
+    match removed_user_teller {
+        Ok(teller_loc) => {
             server_broadcaster
-                .user_update(&sub_queue, removed_user.lock().service_location)
+                .user_update(&mut sub_queue, teller_loc)
                 .await;
-            HttpResponse::Ok().body(format!("Removed: {:?}", removed_user))
+            HttpResponse::Ok().body(format!("Removed: USER"))
         }
         Err(err) => HttpResponse::NotFound().body(err),
     }

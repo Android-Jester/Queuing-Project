@@ -38,8 +38,7 @@ pub async fn remove_user(
     server_queue: Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     let mut queue = queue_data.lock();
-    let user = queue.search_user(national_id.national_id.clone()).unwrap();
-    match queue.user_remove(user, &mut server_queue.lock()) {
+    match queue.user_remove(national_id.national_id.clone(), &mut server_queue.lock()) {
         Ok(_) => {
             info!("User Removed");
             HttpResponse::Ok().body("User Removed")
@@ -58,14 +57,14 @@ pub struct ServerQueueQuery {
 
 #[get("/queue")]
 pub async fn user_queues(
-    req: HttpRequest,
     server_queues: Data<Mutex<SubQueues>>,
     teller_loc: Query<ServerQueueQuery>,
     server_broadcaster: Data<ServerBroadcaster>,
 ) -> impl Responder {
+    let server_queues = server_queues.into_inner().clone();
     let queue = server_queues.lock();
     let json_data = queue.teller_show_queue(teller_loc.teller_position);
     server_broadcaster
-        .new_client(req.peer_addr().unwrap().ip().to_string(), &json_data)
+        .new_client(&json_data)
         .await
 }

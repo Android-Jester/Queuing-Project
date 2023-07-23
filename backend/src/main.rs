@@ -21,7 +21,7 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin();
         App::new()
             .wrap(cors)
-            // .wrap(middleware::Logger::default())
+            .wrap(middleware::Logger::default())
             .app_data(queue_data_main.clone())
             .app_data(queue_data_sub.clone())
             .app_data(Data::from(Arc::clone(&broadcast_teller_lists)))

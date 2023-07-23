@@ -13,7 +13,7 @@ impl ServerQueue {
         }
     }
 }
-impl super::prelude::SubQueues {
+impl SubQueues {
     pub fn teller_count(&self) -> usize {
         self.tellers.len()
     }
@@ -41,17 +41,19 @@ impl super::prelude::SubQueues {
             Err("No Available Teller")
         }
     }
-    pub fn teller_show_queue(&self, service_location: usize) -> Vec<Arc<Mutex<ClientQueueData>>> {
-        if self.teller_count() > 0 {
+    pub fn teller_show_queue(&self, service_location: usize) -> Vec<ClientQueueData> {
             let teller = &self.tellers[service_location];
             if !teller.users.is_empty() {
-                teller.users.clone()
+                let mut results: Vec<ClientQueueData> = Vec::new();
+                for client_data in teller.users.iter() {
+                    let unfocused_client_data = client_data.lock().clone();
+                    results.push(unfocused_client_data);
+                }
+                results
             } else {
                 vec![]
             }
-        } else {
-            vec![]
-        }
+
     }
     pub fn teller_check_state(&self, service_location: usize) -> bool {
         self.tellers[service_location].teller.active
