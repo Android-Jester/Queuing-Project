@@ -73,7 +73,7 @@ impl ServerBroadcaster {
     }
 
     /// Registers client with broadcaster, returning an SSE response body.
-    pub async fn new_client(&self, ip: String, data: &Vec<ClientQueueData>) -> Sse<ChannelStream> {
+    pub async fn new_client(&self, ip: String, data: &Vec<Arc<Mutex<ClientQueueData>>>) -> Sse<ChannelStream> {
         let (tx, rx) = sse::channel(10);
 
         tx.send(sse::Data::new_json(data).unwrap()).await.unwrap();

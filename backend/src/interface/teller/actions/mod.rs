@@ -38,7 +38,7 @@ pub async fn remove_user(
     server_queue: Data<Mutex<SubQueues>>,
 ) -> impl Responder {
     let mut queue = queue_data.lock();
-    let user = queue.search_user(national_id.national_id.clone());
+    let user = queue.search_user(national_id.national_id.clone()).unwrap();
     match queue.user_remove(user, &mut server_queue.lock()) {
         Ok(_) => {
             info!("User Removed");

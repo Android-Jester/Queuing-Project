@@ -33,6 +33,7 @@ pub async fn main_queue_join(
         ClientQueueData::new(user_queue_input, user_name, 0),
         &mut sub_queue,
     ) {
+        let added_user = added_user.lock();
         server_broadcast.user_update(&sub_queue, 0).await;
         let ip = national_id;
 
@@ -52,13 +53,14 @@ pub async fn show_countdowner(
 ) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
     let mut sub_queue = sub_queue.lock();
-    let user = main_queue.lock().search_user(query.national_id.clone());
+    let unwrapped_user = main_queue.lock().search_user(query.national_id.clone()).unwrap();
+    let user = unwrapped_user.lock();
     sub_queue
         .timer_countdown(
             ip.to_string(),
             user.sub_queue_position,
             user.service_location,
-            client_broadcaster,
+            client_broadcaster.into_inner(),
         )
         .await;
     HttpResponse::Ok()
@@ -72,14 +74,14 @@ pub async fn main_queue_leave(
     sub_queue: Data<Mutex<SubQueues>>,
     server_broadcaster: Data<ServerBroadcaster>,
 ) -> impl Responder {
-    let user = user.into_inner();
+    let user = Arc::new(Mutex::new(user.into_inner()));
     let mut main_queue = main_queue.lock();
     let mut sub_queue = sub_queue.lock();
     let removed_user = main_queue.user_remove(user.clone(), &mut sub_queue);
     match removed_user {
         Ok(removed_user) => {
             server_broadcaster
-                .user_update(&sub_queue, removed_user.service_location)
+                .user_update(&sub_queue, removed_user.lock().service_location)
                 .await;
             HttpResponse::Ok().body(format!("Removed: {:?}", removed_user))
         }

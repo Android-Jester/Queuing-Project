@@ -67,8 +67,9 @@ impl ClientQueueData {
         // self.national_id = user.national_id;
     }
 
-    pub fn setup_main(&mut self, position: usize) {
+    pub fn setup_main(&mut self, position: usize, servers: &SubQueues) {
         self.position = position;
+        SubQueues::customer_sub_queue_setup(servers, self);
     }
 
     pub fn setup_sub(&mut self, sub_queue_position: usize, startup_timer: usize) {

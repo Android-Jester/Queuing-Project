@@ -83,7 +83,7 @@ impl ClientBroadcaster {
                 ip,
                 added_user.sub_queue_position,
                 added_user.service_location,
-                broadcaster,
+                broadcaster.into_inner(),
             )
             .await;
         };
@@ -98,14 +98,15 @@ impl ClientBroadcaster {
     }
 
     // Broadcasts `msg` to all clients.
-    pub async fn broadcast_countdown(&self, user: &ClientQueueData, ip: String) {
-        info!("Called");
+    pub async fn broadcast_countdown(&self, user: ClientQueueData, ip: String) -> impl std::marker::Send {
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
             if client.ip == ip {
+                info!("Called");
                 let user_channel_data = sse::Data::new_json(user.clone()).unwrap();
                 client.sender.send(user_channel_data)
             } else {
+                info!("Called Failed");
                 client.sender.send(sse::Data::new(""))
             }
         });

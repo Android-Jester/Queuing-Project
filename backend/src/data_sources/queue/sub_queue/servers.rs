@@ -1,8 +1,8 @@
 use crate::prelude::*;
-#[derive(PartialEq, Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerQueue {
     pub teller: ServerQuery,
-    pub users: Vec<ClientQueueData>,
+    pub users: Vec<Arc<Mutex<ClientQueueData>>>,
 }
 
 impl ServerQueue {
@@ -41,7 +41,7 @@ impl super::prelude::SubQueues {
             Err("No Available Teller")
         }
     }
-    pub fn teller_show_queue(&self, service_location: usize) -> Vec<ClientQueueData> {
+    pub fn teller_show_queue(&self, service_location: usize) -> Vec<Arc<Mutex<ClientQueueData>>> {
         if self.teller_count() > 0 {
             let teller = &self.tellers[service_location];
             if !teller.users.is_empty() {
