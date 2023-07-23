@@ -89,6 +89,7 @@ impl ClientBroadcaster {
         };
         rx
     }
+    //TODO: Kick Error off
 
     pub async fn error(&self) -> Sse<ChannelStream> {
         let (tx, rx) = sse::channel(10);
@@ -110,6 +111,8 @@ impl ClientBroadcaster {
                 client.sender.send(sse::Data::new(""))
             }
         });
+
+
 
         // try to send to all clients, ignoring failures
         // disconnected clients will get swept up by `remove_stale_clients`
