@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-date= /usr/bin/date
-commit="${date}"
-# echo "$commit"
+commit=$(date)
+echo $commit
 
 git add --all;
-commit | git commit -am -;
-git push origin main;
+git commit -am `date '+%a-%b-%d_%H:%M:%S'`;
+# git push origin main;
