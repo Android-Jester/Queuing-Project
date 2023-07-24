@@ -21,7 +21,12 @@ pub fn find_teller(teller_id: String) -> Result<ServerQuery, &'static str> {
             .first(connection)
     });
     match transactions_data {
-        Ok(teller) => Ok(teller),
-        Err(_) => Err("Unable to Find Telle"),
+        Ok(teller) => {
+            info!("Teller: {:?}", teller);
+            Ok(teller) },
+        Err(_) => {
+            error!("Unable to find teller");
+            Err("Unable to Find Telle")
+        },
     }
 }

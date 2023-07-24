@@ -17,7 +17,7 @@ pub struct ServerClients {
 }
 
 impl ServerClients {
-    fn new( sender: sse::Sender) -> Self {
+    fn new(sender: sse::Sender) -> Self {
         Self { sender }
     }
 }
@@ -75,7 +75,9 @@ impl ServerBroadcaster {
     /// Registers client with broadcaster, returning an SSE response body.
     pub async fn new_client(&self, data: &Vec<ClientQueueData>) -> Sse<ChannelStream> {
         let (tx, rx) = sse::channel(1);
-        tx.send(sse::Data::new_json(data.clone()).unwrap()).await.unwrap();
+        tx.send(sse::Data::new_json(data.clone()).unwrap())
+            .await
+            .unwrap();
         self.inner.lock().clients.push(ServerClients::new(tx));
         rx
     }

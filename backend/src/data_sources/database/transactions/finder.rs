@@ -7,7 +7,10 @@ pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
             .select(Transaction::as_select())
             .load(connection)
     }) {
-        Ok(transactions) => Ok(transactions),
+        Ok(transactions) => {
+            info!("Transactions: {:?}", transactions);
+            Ok(transactions)
+        },
         Err(_) => Err("Unable to find transactions"),
     }
 }

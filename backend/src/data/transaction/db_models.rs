@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use chrono::NaiveDateTime;
 
-#[derive(Selectable, Queryable, Insertable, Deserialize, Serialize, Clone)]
+#[derive(Selectable, Queryable, Insertable, Deserialize, Serialize, Clone, Debug)]
 #[diesel(table_name = Transactions)]
 #[diesel(check_for_backend(Mysql))]
 pub struct Transaction {

@@ -6,7 +6,7 @@ pub struct ClientLoginData {
     pub password: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ClientInputData {
     pub national_id: String,
     pub activity: String,

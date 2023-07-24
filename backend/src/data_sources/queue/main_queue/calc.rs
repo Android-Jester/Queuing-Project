@@ -28,6 +28,10 @@ pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
             }
         }
     }
+    info!("Server 1: {:?}", server_1);
+    info!("Server 2: {:?}", server_2);
+    info!("Server 3: {:?}", server_3);
+    info!("Server 4: {:?}", server_4);
 
     for data in 0..server_1.len() {
         service_times.push([
