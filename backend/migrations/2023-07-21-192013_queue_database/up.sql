@@ -30,7 +30,7 @@ CREATE TABLE Transactions (
     server_id VARCHAR(255) NOT NULL,
     client_national_id VARCHAR(15) NOT NULL,
     duration FLOAT NOT NULL,
-    created_date TIMESTAMP NOT NULL
+    created_date TIMESTAMP NOT NULL,
     -- Foreign Key pair
---     FOREIGN KEY (server_id) REFERENCES Servers(server_id)
+    FOREIGN KEY (server_id) REFERENCES Servers(server_id)
 );

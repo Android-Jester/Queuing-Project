@@ -1,3 +1,4 @@
+use std::cmp::min;
 use crate::prelude::*;
 
 fn calc_best_avg(avg_times: [f64; SERVER_COUNT]) -> u8 {
@@ -11,34 +12,29 @@ fn calc_best_avg(avg_times: [f64; SERVER_COUNT]) -> u8 {
 
 pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
     let transactions = list_transactions().unwrap();
-    let mut server_1: Vec<f64> = Vec::new();
-    let mut server_2: Vec<f64> = Vec::new();
-    let mut server_3: Vec<f64> = Vec::new();
-    let mut server_4: Vec<f64> = Vec::new();
+    let mut servers: Vec<Vec<f64>> = vec![vec![], vec![], vec![], vec![]];
     let mut service_times: Vec<[f64; SERVER_COUNT]> = Vec::new();
     let mut best_queue: Vec<u8> = Vec::new();
     for transaction in transactions {
-        if let Ok(teller) = find_teller(transaction.server_id) {
-            match teller.station {
-                1 => server_1.push(transaction.duration as f64),
-                2 => server_2.push(transaction.duration as f64),
-                3 => server_3.push(transaction.duration as f64),
-                4 => server_4.push(transaction.duration as f64),
-                _ => {}
+        let teller = find_teller(transaction.server_id);
+        match teller {
+            Ok(teller_data) => servers[teller_data.station as usize].push(transaction.duration as f64),
+            Err(err) => {
+                error!("ERROR: {err}");
             }
         }
     }
-    info!("Server 1: {:?}", server_1);
-    info!("Server 2: {:?}", server_2);
-    info!("Server 3: {:?}", server_3);
-    info!("Server 4: {:?}", server_4);
+    let mut least_count = 0;
 
-    for data in 0..server_1.len() {
+        for serve_data in servers.clone() {
+            least_count = min(serve_data.len(), least_count);
+        }
+    for data in 0..=least_count {
         service_times.push([
-            server_1[data],
-            server_2[data],
-            server_3[data],
-            server_4[data],
+            servers[0][data],
+            servers[1][data],
+            servers[2][data],
+            servers[3][data],
         ])
     }
 

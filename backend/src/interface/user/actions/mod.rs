@@ -33,17 +33,22 @@ pub async fn main_queue_join(
         national_id: user_input.national_id.clone(),
     };
     info!("Pred: {:?}", prediction);
-    if let Ok(added_user) = main_queue.user_add(
-        ClientQueueData::new(user_input.clone(), user_name, prediction),
-        &mut sub_queue,
-    ) {
-        info!("SERVER QUEUE: {:?}", sub_queue);
-        let added_user = added_user;
+    if prediction < sub_queue.teller_count() {
+        if let Ok(added_user) = main_queue.user_add(
+            ClientQueueData::new(user_input.clone(), user_name, prediction),
+            &mut sub_queue,
+        ) {
+            info!("SERVER QUEUE: {:?}", sub_queue);
+            let added_user = added_user;
 
-        client_broadcast.new_client(&added_user, national_id, &mut sub_queue, client_broadcast.clone(), server_broadcast.clone()).await
+            client_broadcast.new_client(&added_user, national_id, &mut sub_queue, client_broadcast.clone(), server_broadcast.clone()).await
+        } else {
+            client_broadcast.error().await
+        }
     } else {
         client_broadcast.error().await
     }
+
 }
 
 #[derive(Serialize, Deserialize, Clone)]

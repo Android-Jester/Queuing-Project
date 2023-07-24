@@ -15,7 +15,6 @@ pub mod prelude {
                 .service(user_login)
                 .service(guest_login)
                 .service(client_listings)
-                // .service(show_countdowner)
                 .service(main_queue_join)
                 .service(main_queue_leave),
         );
