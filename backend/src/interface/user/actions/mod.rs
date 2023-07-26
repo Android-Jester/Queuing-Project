@@ -85,7 +85,7 @@ pub async fn main_queue_leave(
     match removed_user_teller {
         Ok(teller_loc) => {
             server_broadcaster
-                .user_update(&mut sub_queue, teller_loc)
+                .user_update(&mut sub_queue, teller_loc.server_location as usize)
                 .await;
             HttpResponse::Ok().body(format!("Removed: USER"))
         }

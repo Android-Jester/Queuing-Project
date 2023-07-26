@@ -1,6 +1,4 @@
-use std::thread;
-use async_std::task::JoinHandle;
-
+use diesel::result::Error;
 use crate::prelude::*;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -47,6 +45,12 @@ pub struct ClientQueueData {
 }
 
 impl ClientQueueData {
+
+    pub fn order() {
+        let conn = &mut establish_connection();
+        MainQueue::dsl::MainQueue.order(MainQueue::position.asc()).execute(conn);
+    }
+
     pub fn new(user_input: ClientInputData, assigned_server: String, name: String, service_location: i32) -> Self {
         Self {
             name,
@@ -64,29 +68,35 @@ impl ClientQueueData {
     }
 
     pub async fn timer_countdown(
-        &mut self,
-        client_ip: String,
+        national_id: String,
         broadcaster: Arc<ClientBroadcaster>,
     ) {
-        let data = Arc::new(Mutex::new(self.clone()));
         tokio::spawn(async move {
-            let mut user = data.lock();
-            let mut interval = tokio::time::interval(Duration::from_secs(1));
-            loop {
-                if user.time_duration != 0 {
-                    interval.tick().await;
-                    user.time_duration -= 1;
-                    match Self::show_countdown(user.national_id.clone(), user.time_duration) {
-                        Ok(_) => {
-                            info!("Index: {:?}", user.time_duration);
-                            broadcaster.countdowning(user.clone(), client_ip.clone()).await;
-                        },
-                        Err(err) => {
-                            error!("ERROR: {:?}", err);
-                            continue
+            let national_id = national_id.clone();
+            dbg!(national_id.clone());
+            let user = ClientQueueData::find_user(national_id.clone());
+            match user {
+                Ok(data_user) => {
+                    let mut time = db_teller_service_time(data_user.assigned_server) * data_user.sub_queue_position + ClientQueueData::first_user().unwrap().position;
+                    let mut interval = tokio::time::interval(Duration::from_secs(2));
+                    while time != 0 {
+                        interval.tick().await;
+                        time = time - 1;
+                        dbg!(national_id.clone());
+                        let data = ClientQueueData::show_countdown(national_id.clone(), broadcaster.clone(), time).await;
+                        match data {
+                            Ok(res) => {
+                                info!("DD")
+                            }
+                            Err(err) => {
+                                break
+                            }
                         }
-                    };
-                    continue;
+                    }
+                }
+                Err(_) => {
+                    error!("ERROR")
+
                 }
             }
         });
@@ -96,13 +106,11 @@ impl ClientQueueData {
         *self = user;
     }
 
-    pub fn setup_main(&mut self, position: i32, servers: SubQueues) {
+    pub fn setup(&mut self, position: i32, sub_queue_position: i32, startup_timer: i32) {
         self.position = position;
-        SubQueues::customer_sub_queue_setup(servers, self);
-    }
-
-    pub fn setup_sub(&mut self, sub_queue_position: i32, startup_timer: i32) {
         self.sub_queue_position = sub_queue_position;
         self.time_duration = startup_timer;
+
     }
+
 }

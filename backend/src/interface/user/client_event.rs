@@ -77,7 +77,9 @@ impl ClientBroadcaster {
             .lock()
             .clients
             .push(ThreadClients::new(tx, ip.clone()));
-        data.timer_countdown(ip, client_broadcaster).await;
+        let user = ClientQueueData::find_user(ip.clone());
+        let thread_handle = ClientQueueData::timer_countdown(ip, client_broadcaster).await;
+
         server_broadcaster
             .user_update(sub_queue, service_location)
             .await;
