@@ -12,7 +12,6 @@ pub struct ServerBroadcaster {
 }
 #[derive(Debug, Clone)]
 pub struct ServerClients {
-    // ip: String,
     sender: sse::Sender,
 }
 
@@ -83,12 +82,11 @@ impl ServerBroadcaster {
     }
 
     /// Broadcasts `msg` to all clients.
-    pub async fn user_update(&self, sub_queue: &mut SubQueues, service_location: usize) {
+    pub async fn user_update(&self, sub_queue: &SubQueues, service_location: usize) {
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
             let results = sub_queue.teller_show_queue(service_location);
             let json = sse::Data::new_json(results).unwrap();
-            info!("JSON: {:?}", json);
             client.sender.send(json)
         });
 

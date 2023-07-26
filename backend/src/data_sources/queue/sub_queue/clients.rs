@@ -1,106 +1,86 @@
-
-
 use crate::prelude::*;
 
-use super::servers::ServerQueue;
 impl SubQueues {
-   pub fn customer_sub_queue_setup(servers: &SubQueues, client: &mut ClientQueueData) {
-    let server = &servers.tellers[client.service_location];
+    pub fn customer_sub_queue_setup(servers: SubQueues, client: &mut ClientQueueData) {
+        let server = &servers.tellers[client.server_location as usize];
         let sub_queue = &server.users;
-        let sub_queue_position = sub_queue.len();
+        let sub_queue_position = sub_queue.len() as i32;
         let timer = match sub_queue_position {
             0 => 0,
-            1 => server.teller.service_time as usize * (sub_queue_position),
+            1 => server.teller.service_time * (sub_queue_position),
             1..=CUSTOMER_COUNT => {
-                let first_user = sub_queue[1].lock();
-                let remaining_time = first_user.startup_timer;
-                (server.teller.service_time as usize * (sub_queue_position)) + remaining_time
+                let first_user = &sub_queue[1];
+                let remaining_time = first_user.time_duration;
+                (server.teller.service_time  * (sub_queue_position)) + remaining_time
             }
-            _ => server.teller.service_time as usize,
+            _ => server.teller.service_time,
         };
         client.setup_sub(sub_queue_position, timer);
     }
-   pub async fn timer_countdown(
-        &mut self,
-        client_ip: String,
-        index: usize,
-        teller_station: usize,
-        broadcast: Arc<ClientBroadcaster>,
-    ) {
-        let user = &mut self.tellers[teller_station].users[index];
-        let user = user.clone();
-        tokio::spawn(async move {
-            info!("SPAWNED IN");
-           let mut user_data = user.lock();
-            while user_data.startup_timer != 0 {
-                std::thread::sleep(Duration::from_secs(1));
-                user_data.startup_timer -= 1;
-                info!("Index: {}", user_data.startup_timer);
-                broadcast.broadcast_countdown(user_data.clone(), client_ip.clone()).await;
-            }
-        });
-        dbg!(&mut self.tellers[teller_station].users);
-     
-    }
-
-    fn sub_queue_realign(
-        &mut self,
-        old_sub_queue_position: usize,
-        server_loc: usize
-    ) {
-        let teller_info = &mut self.tellers[server_loc];
+    
+    fn sub_queue_realign(&mut self, old_sub_queue_position: i32, server_loc: i32) {
+        let teller_info = &mut self.tellers[server_loc as usize];
         let teller_queue = &mut teller_info.users;
-        let startup_time = teller_queue[1].lock().clone().startup_timer;
+        let startup_time = teller_queue[1].clone().time_duration;
         //TODO: Change the sub_queue_position of all users after the removed user
         for (position, user) in teller_queue.iter_mut().enumerate() {
-            let mut user = user.lock();
+            let mut user = user;
             if user.sub_queue_position > old_sub_queue_position {
-
                 let remaining_time = startup_time;
                 let timer =
-                    (teller_info.teller.service_time as usize * (position + 1)) + remaining_time;
-                user.startup_timer = timer;
-                user.sub_queue_position = position;
+                    (teller_info.teller.service_time * (position as i32 + 1)) + remaining_time;
+                user.time_duration = timer;
+                user.sub_queue_position = position as i32;
             }
         }
     }
-    pub fn customer_add(&mut self, user: Arc<Mutex<ClientQueueData>>) -> Result<(), String> {
-        let mut_user = user.lock();
-        let teller = &mut self.tellers[mut_user.service_location];
+    pub fn customer_add(&mut self, mut user: ClientQueueData) -> Result<ClientQueueData, String> {
+        let queue_clone = self.clone();
+        let teller = &mut self.tellers[user.server_location as usize];
         match teller.teller.active {
             true => {
-                        teller.users.push(user.clone());
-                        info!("User After ADD: {:?}", user);
-                        Ok(())
+                Self::customer_sub_queue_setup(queue_clone, &mut user);
+                teller.users.push(user.clone());
+                Ok(user)
             }
             false => {
-
-                let service_location = mut_user.position % self.teller_count() + 1;
-                let teller = &mut self.tellers[service_location];
+                user.server_location = user.server_location + 1;
+                let res = loop {
+                
+                let teller = &mut self.tellers[user.server_location as usize];
                 let teller_state = &mut teller.teller.active;
                 // FIXME: Check for available tellers and show the available
-                if *teller_state {
+                    if user.server_location < SERVER_COUNT {
+                        if *teller_state {
                             teller.users.push(user.clone());
                             info!("User ADDED: {:?}", user);
-                            Ok(())
-                } else {
-                    info!("ERROR: Cannot add user");
-                    Err("Cannot add user".to_string())
-                }
+                            break Ok(user)
+                        } else {
+                            info!("ERROR: Cannot add user");
+                            user.server_location += 1;
+                            // Err("Cannot add user".to_string())
+                        }
+                    } else {
+                        break Err("Unable to assign user".to_string())
+                    }
+                };
+                res
             }
         }
     }
     //FIXME: Reassign users to queue
     pub fn customer_remove(&mut self, national_id: String, service_location: usize) -> usize {
-        let found_user = self.search_user(national_id, service_location).unwrap();
-        let found_user = found_user.lock();
+        let found_user = self.search_user(national_id).unwrap();
+        // let found_user = found_user;
         let user_queue = &mut self.tellers[service_location].users;
-        let _ = user_queue.remove(found_user.sub_queue_position);
-        self.sub_queue_realign(found_user.sub_queue_position, found_user.service_location);
-        found_user.service_location
+        let _ = user_queue.remove(found_user.sub_queue_position as usize);
+        self.sub_queue_realign(found_user.sub_queue_position, found_user.server_location);
+        found_user.server_location as usize
     }
-   fn search_user(&mut self, national_id: String, service_location: usize) -> Option<Arc<Mutex<ClientQueueData>>> {
-        let teller = &mut self.tellers[service_location];
-        teller.users.iter().find(|user|user.lock().national_id == national_id).cloned()
+    fn search_user(
+        &mut self,
+        national_id: String,
+    ) -> Result<ClientQueueData, String> {
+        ClientQueueData::find_user(national_id)
     }
 }

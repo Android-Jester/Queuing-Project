@@ -39,7 +39,7 @@ fn train_model(
 }
 
 /// predict best line
-pub fn prediction(pred: [f64; SERVER_COUNT]) -> u8 {
+pub fn prediction(pred: [f64; SERVER_COUNT as usize]) -> u8 {
     let service_times_data = get_all_service_times();
     info!("Service Times: {:?}", service_times_data);
     let data = classify_data(&service_times_data);

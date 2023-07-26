@@ -24,6 +24,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    MainQueue (national_id) {
+        #[max_length = 16]
+        national_id -> Varchar,
+        position -> Integer,
+        name -> Text,
+        sub_queue_position -> Integer,
+        #[max_length = 255]
+        assigned_server -> Varchar,
+        server_location -> Integer,
+        #[max_length = 255]
+        activity -> Varchar,
+        time_duration -> Integer,
+    }
+}
+
+diesel::table! {
     Servers (server_id) {
         #[max_length = 255]
         server_id -> Varchar,
@@ -38,8 +54,7 @@ diesel::table! {
 diesel::table! {
     Transactions (id) {
         id -> Integer,
-        #[max_length = 255]
-        detail -> Varchar,
+        detail -> Text,
         #[max_length = 255]
         server_id -> Varchar,
         #[max_length = 15]
@@ -49,11 +64,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(MainQueue -> Servers (assigned_server));
 diesel::joinable!(Transactions -> Servers (server_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     Clients,
     Guests_Clients,
+    MainQueue,
     Servers,
     Transactions,
 );

@@ -2,7 +2,7 @@ use crate::prelude::*;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerQueue {
     pub teller: ServerQuery,
-    pub users: Vec<Arc<Mutex<ClientQueueData>>>,
+    pub users: Vec<ClientQueueData>,
 }
 
 impl ServerQueue {
@@ -18,7 +18,7 @@ impl SubQueues {
         self.tellers.len()
     }
     pub fn teller_add(&mut self, teller: ServerQuery) -> Result<(), &'static str> {
-        match self.teller_count() < SERVER_COUNT {
+        match self.teller_count() < SERVER_COUNT as usize {
             true => {
                 self.tellers.push(ServerQueue::new(teller));
                 info!("{:?}", self.tellers);
@@ -42,18 +42,17 @@ impl SubQueues {
         }
     }
     pub fn teller_show_queue(&self, service_location: usize) -> Vec<ClientQueueData> {
-            let teller = &self.tellers[service_location];
-            if !teller.users.is_empty() {
-                let mut results: Vec<ClientQueueData> = Vec::new();
-                for client_data in teller.users.iter() {
-                    let unfocused_client_data = client_data.lock().clone();
-                    results.push(unfocused_client_data);
-                }
-                results
-            } else {
-                vec![]
+        let teller = &self.tellers[service_location];
+        if !teller.users.is_empty() {
+            let mut results: Vec<ClientQueueData> = Vec::new();
+            for client_data in teller.users.iter() {
+                let unfocused_client_data = client_data.clone();
+                results.push(unfocused_client_data);
             }
-
+            results
+        } else {
+            vec![]
+        }
     }
     pub fn teller_check_state(&self, service_location: usize) -> bool {
         self.tellers[service_location].teller.active

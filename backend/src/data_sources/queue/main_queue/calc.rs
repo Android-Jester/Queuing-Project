@@ -1,7 +1,7 @@
 use std::cmp::min;
 use crate::prelude::*;
 
-fn calc_best_avg(avg_times: [f64; SERVER_COUNT]) -> u8 {
+fn calc_best_avg(avg_times: [f64; SERVER_COUNT as usize]) -> u8 {
     let mut best = avg_times[0];
     for i in avg_times.iter() {
         best = best.max(*i)
@@ -13,7 +13,7 @@ fn calc_best_avg(avg_times: [f64; SERVER_COUNT]) -> u8 {
 pub fn get_all_service_times() -> (Vec<[f64; 4]>, Vec<u8>) {
     let transactions = list_transactions().unwrap();
     let mut servers: Vec<Vec<f64>> = vec![vec![], vec![], vec![], vec![]];
-    let mut service_times: Vec<[f64; SERVER_COUNT]> = Vec::new();
+    let mut service_times: Vec<[f64; SERVER_COUNT as usize]> = Vec::new();
     let mut best_queue: Vec<u8> = Vec::new();
     for transaction in transactions {
         let teller = find_teller(transaction.server_id);
