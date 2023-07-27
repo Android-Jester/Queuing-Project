@@ -12,12 +12,16 @@ pub struct ServerBroadcaster {
 }
 #[derive(Debug, Clone)]
 pub struct ServerClients {
+    teller_pos: usize,
     sender: sse::Sender,
 }
 
 impl ServerClients {
-    fn new(sender: sse::Sender) -> Self {
-        Self { sender }
+    fn new(sender: sse::Sender, pos: usize) -> Self {
+        Self {
+            teller_pos: pos,
+            sender,
+        }
     }
 }
 
@@ -72,12 +76,16 @@ impl ServerBroadcaster {
     }
 
     /// Registers client with broadcaster, returning an SSE response body.
-    pub async fn new_client(&self, data: &Vec<ClientQueueData>) -> Sse<ChannelStream> {
+    pub async fn new_client(&self, queue: &SubQueues, position: usize) -> Sse<ChannelStream> {
+        let data = queue.teller_show_queue(position);
         let (tx, rx) = sse::channel(1);
         tx.send(sse::Data::new_json(data.clone()).unwrap())
             .await
             .unwrap();
-        self.inner.lock().clients.push(ServerClients::new(tx));
+        self.inner
+            .lock()
+            .clients
+            .push(ServerClients::new(tx, position));
         rx
     }
 
@@ -85,9 +93,13 @@ impl ServerBroadcaster {
     pub async fn user_update(&self, sub_queue: &SubQueues, service_location: usize) {
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {
-            let results = sub_queue.teller_show_queue(service_location);
-            let json = sse::Data::new_json(results).unwrap();
-            client.sender.send(json)
+            if client.teller_pos == service_location {
+                let results = sub_queue.teller_show_queue(service_location);
+                let json = sse::Data::new_json(results).unwrap();
+                client.sender.send(json)
+            } else {
+                client.sender.send(sse::Data::new(""))
+            }
         });
 
         // try to send to all clients, ignoring failures

@@ -1,20 +1,35 @@
 use crate::prelude::*;
+
+struct TellerPos {}
+
 #[post("/dismiss")]
 pub async fn record_transaction(
     transaction: Json<Transaction>,
+    teller_pos: Path<i32>,
     queue_data: Data<Mutex<Queue>>,
     sub_queue_data: Data<Mutex<SubQueues>>,
+    broadcast: Data<ClientBroadcaster>,
+    server_broadcast: Data<ServerBroadcaster>,
 ) -> impl Responder {
     let transaction = transaction.into_inner();
     match add_transaction(transaction.clone()) {
         Ok(_) => {
+            let service_location = teller_pos.into_inner();
             let mut subqueue = sub_queue_data.lock();
             match queue_data
                 .lock()
-                .user_dismiss(transaction.client_national_id, &mut subqueue)
+                .user_remove(
+                    transaction.client_national_id,
+                    &mut subqueue,
+                    broadcast.into_inner(),
+                )
+                .await
             {
                 Ok(_) => {
                     info!("Transaction Recorded");
+                    server_broadcast
+                        .user_update(&subqueue, service_location as usize)
+                        .await;
                     HttpResponse::Ok().body("Transaction Recorded")
                 }
                 Err(e) => {
@@ -34,16 +49,29 @@ pub struct RemoveUserQuery {
 
 #[post("/remove")]
 pub async fn remove_user(
-    national_id: Query<RemoveUserQuery>,
+    national_id: Json<RemoveUserQuery>,
+    teller_pos: Path<i32>,
     queue_data: Data<Mutex<Queue>>,
     server_queue: Data<Mutex<SubQueues>>,
+    broadcast: Data<ClientBroadcaster>,
+    server_broadcast: Data<ServerBroadcaster>,
 ) -> impl Responder {
     let mut queue = queue_data.lock();
     let mut subqueue = server_queue.lock();
-
-    match queue.user_remove(national_id.national_id.clone(), &mut subqueue) {
+    let service_location = teller_pos.into_inner();
+    match queue
+        .user_remove(
+            national_id.national_id.clone(),
+            &mut subqueue,
+            broadcast.into_inner(),
+        )
+        .await
+    {
         Ok(_) => {
             info!("User Removed");
+            server_broadcast
+                .user_update(&subqueue, service_location as usize)
+                .await;
             HttpResponse::Ok().body("User Removed")
         }
         Err(e) => {
@@ -66,6 +94,8 @@ pub async fn user_queues(
 ) -> impl Responder {
     let server_queues = server_queues.into_inner().clone();
     let queue = server_queues.lock();
-    let json_data = queue.teller_show_queue(teller_loc.teller_position);
-    server_broadcaster.new_client(&json_data).await
+    // let json_data = queue.teller_show_queue(teller_loc.teller_position);
+    server_broadcaster
+        .new_client(&queue, teller_loc.teller_position)
+        .await
 }

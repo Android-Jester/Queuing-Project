@@ -14,6 +14,7 @@ pub struct ServerLogin {
 pub struct ServerQuery {
     pub server_id: String,
     pub station: i32,
+    #[serde(skip_serializing)]
     pub password: String,
     pub service_time: i32,
     pub active: bool,

@@ -36,6 +36,7 @@ diesel::table! {
         #[max_length = 255]
         activity -> Varchar,
         time_duration -> Integer,
+        time_joined -> Timestamp,
     }
 }
 

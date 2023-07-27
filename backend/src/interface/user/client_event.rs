@@ -69,24 +69,38 @@ impl ClientBroadcaster {
         sub_queue: &mut SubQueues,
         service_location: usize,
         server_broadcaster: Arc<ServerBroadcaster>,
-        client_broadcaster: Arc<ClientBroadcaster>,
     ) -> Sse<ChannelStream> {
-        let (tx, rx) = sse::channel(10*1024*1024);
-        tx.send(sse::Data::new_json(data.clone()).unwrap()).await.unwrap();
+        let (tx, rx) = sse::channel(10 * 1024 * 1024);
+        tx.send(sse::Data::new_json(data.clone()).unwrap())
+            .await
+            .unwrap();
         self.inner
             .lock()
             .clients
             .push(ThreadClients::new(tx, ip.clone()));
-        let user = ClientQueueData::find_user(ip.clone());
-        let thread_handle = ClientQueueData::timer_countdown(ip, client_broadcaster).await;
-
+        self.joining(data.clone(), ip).await;
         server_broadcaster
             .user_update(sub_queue, service_location)
             .await;
         rx
     }
 
-    pub async fn countdowning(&self, user: ClientQueueData, ip: String) {
+    pub async fn joining(&self, user: ClientQueueData, ip: String) {
+        warn!("Called");
+        let clients = self.inner.lock().clients.clone();
+        let send_futures = clients.iter().map(|client| {
+            if client.ip == ip {
+                let json = sse::Data::new_json(user.clone()).unwrap();
+                client.sender.send(json)
+            } else {
+                client.sender.send(sse::Data::new(""))
+            }
+        });
+
+        futures_util::future::join_all(send_futures).await;
+    }
+
+    pub async fn leaving(&self, user: ClientQueueData, ip: String) {
         warn!("Called");
         let clients = self.inner.lock().clients.clone();
         let send_futures = clients.iter().map(|client| {

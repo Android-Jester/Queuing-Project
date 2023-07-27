@@ -35,28 +35,31 @@ pub async fn login_teller(
 
 #[derive(Deserialize)]
 pub struct LogoutQuery {
-    teller_index: usize,
+    server_position: usize,
 }
 
 #[post("/logout")]
 pub async fn logout_teller(
-    teller_index: Query<LogoutQuery>,
+    server_position: Json<LogoutQuery>,
     tellers_queue: Data<Mutex<SubQueues>>,
 ) -> impl Responder {
-    let teller_i = teller_index.into_inner().teller_index;
+    let teller_i = server_position.into_inner().server_position;
     let mut sub_queue = tellers_queue.lock();
-    if sub_queue.teller_count() > 0 {
-        match sub_queue.teller_check_state(teller_i) {
-            false => match sub_queue.teller_remove(teller_i) {
-                Ok(_) => {
-                    info!("Teller Logged Out");
-                    HttpResponse::Ok().body("Teller Logged Out")
-                }
-                Err(e) => HttpResponse::Conflict().body(e),
-            },
-            true => HttpResponse::Conflict().body("Teller Already Logged Out"),
-        }
-    } else {
-        HttpResponse::NotFound().body("No Teller Logged In")
+    info!("STATION: {}", teller_i);
+    match sub_queue.teller_check_state(teller_i) {
+        false => match sub_queue.teller_remove(teller_i) {
+            Ok(_) => {
+                info!("Teller Logged Out");
+                HttpResponse::Ok().body("Teller Logged Out")
+            }
+            Err(e) => HttpResponse::NotFound().body(e),
+        },
+        true => match sub_queue.teller_remove(teller_i) {
+            Ok(_) => {
+                info!("Teller Logged Out");
+                HttpResponse::Ok().body("Teller Logged Out")
+            }
+            Err(e) => HttpResponse::Conflict().body(e),
+        },
     }
 }

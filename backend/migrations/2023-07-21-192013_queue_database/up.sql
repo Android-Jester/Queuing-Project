@@ -29,7 +29,7 @@ CREATE TABLE Transactions (
    FOREIGN KEY (server_id) REFERENCES Servers(server_id)
 );
 CREATE TABLE MainQueue (
-#    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+   #    id INTEGER PRIMARY KEY AUTO_INCREMENT,
    national_id VARCHAR(16) PRIMARY KEY NOT NULL,
    position INT NOT NULL,
    name TEXT NOT NULL,
@@ -38,5 +38,6 @@ CREATE TABLE MainQueue (
    server_location INT NOT NULL,
    activity VARCHAR(255) NOT NULL,
    time_duration INT NOT NULL,
+   time_joined TIMESTAMP NOT NULL,
    FOREIGN KEY (assigned_server) REFERENCES Servers(server_id)
 );
