@@ -38,6 +38,7 @@ impl Queue {
         servers: &'a mut SubQueues,
         broadcast: Arc<ClientBroadcaster>,
     ) -> Result<ClientQueueData, String> {
+        self.queue = ClientQueueData::list_users();
         if !self.queue.is_empty() {
             let removed_user = self.search_user(national_id.clone());
             match removed_user {

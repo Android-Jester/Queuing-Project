@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 struct TellerPos {}
 
-#[post("/dismiss")]
+#[post("/dismiss/{teller_pos}")]
 pub async fn record_transaction(
     transaction: Json<Transaction>,
     teller_pos: Path<i32>,
@@ -11,7 +11,11 @@ pub async fn record_transaction(
     broadcast: Data<ClientBroadcaster>,
     server_broadcast: Data<ServerBroadcaster>,
 ) -> impl Responder {
-    let transaction = transaction.into_inner();
+    warn!("Called DATA");
+    dbg!(transaction.clone());
+    let mut transaction = transaction.into_inner();
+    transaction.created_date = chrono::Utc::now().naive_utc();
+
     match add_transaction(transaction.clone()) {
         Ok(_) => {
             let service_location = teller_pos.into_inner();

@@ -9,6 +9,7 @@ pub struct Transaction {
     pub server_id: String,
     pub client_national_id: String,
     pub duration: f32,
+    #[serde(skip_serializing, skip_deserializing)]
     pub created_date: NaiveDateTime,
 }
 
