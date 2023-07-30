@@ -8,11 +8,9 @@ pub mod prelude {
     pub use super::data::prelude::*;
     pub use super::data_sources::prelude::*;
     pub use super::interface::prelude::*;
-    // pub use tokio::sync::{Mutex, MutexGuard};
     pub use parking_lot::{Mutex, MutexGuard};
     pub use std::time::Duration;
     pub use std::{net::Ipv4Addr, sync::Arc};
-    // pub use tokio::sync::{Mutex, MutexGuard};
 
     // Imports from other packages
     pub use actix_web::{

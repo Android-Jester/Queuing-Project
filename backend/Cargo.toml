@@ -30,3 +30,4 @@ randomforest = "0.1.6"
 serde = { version = "1.0.174", features = ["derive", "rc"] }
 tokio = { version = "1.29.1", features = ["full"] }
 tokio-serde = { version = "0.8.0", features = ["serde", "serde_json", "json"] }
+genpdf = "0.2.0"

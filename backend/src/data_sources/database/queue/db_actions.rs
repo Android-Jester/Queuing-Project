@@ -88,7 +88,7 @@ impl crate::prelude::ClientQueueData {
             delete
         });
         match res {
-            Ok(data) => {}
+            Ok(_) => {}
             Err(_) => todo!(),
         }
     }
