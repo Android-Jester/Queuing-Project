@@ -54,30 +54,14 @@ impl Queue {
                 }
                 Err(err) => {
                     error!("No User Found");
-                    Err("No User Found".to_string())
+                    Err(err)
                 }
             }
         } else {
             Err("Queue is Empty".to_string())
         }
     }
-    // pub fn user_dismiss<'a>(
-    //     &'a mut self,
-    //     national_id: String,
-    //     servers: &'a mut SubQueues,
-    // ) -> Result<(), String> {
-    //     let user_found = self.search_user(national_id);
-    //     if let Ok(user) = user_found {
-    //         let user = user;
-    //         let user_national_id = user.national_id.clone();
-    //         match self.user_remove(user_national_id, servers).await {
-    //             Ok(_) => Ok(()),
-    //             Err(_) => Err("User Not Found".to_string()),
-    //         }
-    //     } else {
-    //         Err("User Not Found".to_string())
-    //     }
-    // }
+
     pub fn search_user(&self, national_id: String) -> Result<ClientQueueData, String> {
         ClientQueueData::find_user(national_id)
     }
