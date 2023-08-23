@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use chrono::NaiveDateTime;
-use diesel::row::Row;
 
 #[derive(
     Selectable, Queryable, Insertable, Deserialize, QueryableByName, Serialize, Clone, Debug,

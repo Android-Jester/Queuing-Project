@@ -20,7 +20,9 @@ fn rho_pow(ρ: f64, n: usize) -> f64 {
 fn factorial(n: usize) -> f64 {
     (1..=n).fold(1.0, |acc, x| acc * x as f64)
 }
-pub fn get_service_times() {}
+pub fn get_service_times() {
+    
+}
 pub fn average_waiting_times() {}
 pub fn average_customer_count(lambda: f64, c: usize, mu: f64) -> f64 {
     let rho = performance_coefficient(lambda, c as f64, mu);

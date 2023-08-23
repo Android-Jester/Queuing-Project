@@ -1,0 +1,18 @@
+
+
+
+@startuml Manager Activity 
+
+    start
+    : Authentication Request ;
+    : View System Analytics Data ;
+    if (Manager Remained?) then (yes)
+        : Extract Analytics Data ;
+    else (no)
+    endif
+    : Logout ;
+    end
+
+
+
+@enduml

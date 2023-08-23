@@ -1,7 +1,5 @@
 use crate::prelude::*;
 
-struct TellerPos {}
-
 #[post("/dismiss/{teller_pos}")]
 pub async fn record_transaction(
     transaction: Json<Transaction>,
@@ -98,7 +96,6 @@ pub async fn user_queues(
 ) -> impl Responder {
     let server_queues = server_queues.into_inner().clone();
     let queue = server_queues.lock();
-    // let json_data = queue.teller_show_queue(teller_loc.teller_position);
     server_broadcaster
         .new_client(&queue, teller_loc.teller_position)
         .await

@@ -1,0 +1,45 @@
+
+@startuml Sequence
+
+    actor Customer
+    participant ChatBot as chatbot
+    actor Teller
+    actor Manager
+
+    actor System
+    
+    database "Queue Database" as queue_db
+
+    ' Linkage
+    ' Customer
+    Customer -> chatbot : Enquire on Certain Actions
+    Customer -> System : Authentication Request
+    System -> queue_db : Lookup for User and verify password
+    Customer -> System : Join Queue
+    System -> queue_db : Include User to the Queue Table
+    System -> queue_db : Assign User to Teller from AvailableTellers Table
+    queue_db -> System : Provide Position
+    Customer <- System : Display Remaining Time, Queue Position and Assigned Teller Position  
+    Customer -> System : Leave Queue
+    System -> queue_db : Remove User from Queue Table
+    System -> queue_db : Change Queue Structure
+    
+    ' Teller
+    Teller -> System : Authentication Request
+    System -> queue_db : Lookup for Teller and verify password
+    System -> queue_db : Add Teller to AvailableTellers table
+    queue_db -> System : Provide Teller position
+    System -> Teller : Show Users assigned
+    Teller -> System : Record Transaction or Cancellation
+    System -> queue_db : Remove user from Queue Table
+    Teller -> System : Logout
+    System -> queue_db : Remove Teller from AvailableTellers Table
+
+    ' Manager
+    Manager -> System : Extract Analytics Data
+    System -> queue_db : Extract Transaction Data
+    System -> System : Generate Analytics Report based on Transaction Data
+    System -> Manager : Display Analytics Data
+
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml "Server Component"
+' !theme aws-Orange
+
+[<<Object>> \n Server] as server
+[<<Object>> \n Manager] as manager
+[<<UI>> \n Basic Auth] as auth
+[<<UI>> \n Dashboard] as dashboard
+[<<UI>> \n Navigation] as nav
+[<<System>> Analytics] as analyze
+[<<UI>> \n Customer Remove] as leave
+[<<System>> Record] as rec
+' [<<System>> Assigner] as assign
+
+
+server --> auth  
+auth --> dashboard
+dashboard <-- nav
+auth <- nav
+leave --> auth
+
+
+database "Queue Database" {
+    [Auth Table] as auth_db
+    [Queue Table] as queue_db
+    [Transaction Table] as trans_db
+    
+}
+
+auth_db --> auth
+queue_db --> dashboard
+leave -> rec
+rec --> trans_db
+trans_db --> analyze
+analyze --> manager
+
+@enduml

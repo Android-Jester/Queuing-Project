@@ -1,0 +1,36 @@
+
+
+
+@startuml Customer Activity 
+
+    start
+    : Authentication Request ;
+    : Join Queue ;
+    if (Customer Remained?) then (yes)
+        : "Receive information on Remaining Time, Queue Position and Assigned Teller Position";
+        : "Complete Transaction";
+    else (no)
+        : Leave Queue ;
+    endif
+    : "Logout";
+    end
+  
+    ' ' Teller
+    ' Teller -> System : Authentication Request
+    ' System -> queue_db : Lookup for Teller and verify password
+    ' System -> queue_db : Add Teller to AvailableTellers table
+    ' queue_db -> System : Provide Teller position
+    ' System -> Teller : Show Users assigned
+    ' Teller -> System : Record Transaction or Cancellation
+    ' System -> queue_db : Remove user from Queue Table
+    ' Teller -> System : Logout
+    ' System -> queue_db : Remove Teller from AvailableTellers Table
+
+    ' ' Manager
+    ' Manager -> System : Extract Analytics Data
+    ' System -> queue_db : Extract Transaction Data
+    ' System -> System : Generate Analytics Report based on Transaction Data
+    ' System -> Manager : Display Analytics Data
+
+
+@enduml

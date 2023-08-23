@@ -24,12 +24,15 @@ pub fn get_daily_report() -> Result<Vec<Transaction>, diesel::result::Error> {
 pub fn get_weekly_report() -> Result<Vec<Transaction>, diesel::result::Error> {
     let conn = &mut establish_connection();
     diesel::sql_query("SELECT * FROM Transactions WHERE created_date > NOW() - INTERVAL 1 WEEK")
-        .load(conn)
+        .get_results(conn)
 }
 
 pub fn get_monthly_report() -> Result<Vec<Transaction>, diesel::result::Error> {
     let conn = &mut establish_connection();
-    let transaction = diesel::sql_query("SELECT * FROM Transactions WHERE created_date > NOW() - INTERVAL 1 MONTH").get_results(conn);
+    let transaction = diesel::sql_query(
+        "SELECT * FROM Transactions WHERE created_date > NOW() - INTERVAL 1 MONTH",
+    )
+    .get_results(conn);
     transaction
 }
 

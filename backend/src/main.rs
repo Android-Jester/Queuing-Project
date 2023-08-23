@@ -1,6 +1,5 @@
 use backend::prelude::*;
-use openssl::ssl::SslMethod;
-use std::thread::Thread;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -8,6 +7,7 @@ async fn main() -> std::io::Result<()> {
         "Web Server started at http://{}:3000",
         std::net::Ipv4Addr::UNSPECIFIED
     );
+    let hello = String::from("Hello");
     let broadcast_teller_lists = ServerBroadcaster::create();
     let broadcast_countdown = ClientBroadcaster::create();
     let queue_data_main: Data<Mutex<Queue>> = Data::new(Mutex::new(Queue::default()));

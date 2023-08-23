@@ -1,0 +1,83 @@
+@startuml UseCase
+
+left to right direction
+    actor Customer
+    actor System
+    actor Manager
+    actor Teller
+
+rectangle "Bank Queue System" {
+        ' User
+    package CustomerActions {
+        (Secure Authentication) as auth
+        (Join Queue) as join
+        (Receive Information on Position and Estimated Waiting time)  as display
+        (Leave Queue) as leave
+        (Enquire on Services) as chatbot
+    }
+    ' System
+    package SystemActions {
+        (Change Queue Information) as change
+        (Compile Analytics Data) as comp_analytics
+        (Include Customer on Main Queue) as main_assign
+        (Assign Customer to Teller) as teller_assign
+        (Activate Chatbot) as chatbot_com
+        (Database Lookup for Customer) as cus_lookup
+        (Database Lookup for Employees) as emp_lookup
+    }
+
+
+    ' Teller
+    package TellerActions {
+        (Secure Authentication) as emp_auth
+        (Display assigned Customers) as dis_cus
+        (Record Transaction) as rec_tran
+        (Record Cancellation) as rec_canc
+        (Remove User from System) as rem_user
+    }
+
+    ' Manager
+    (Extract Analytics Data) as analytics
+}
+
+
+
+' Linkage
+
+' Customer
+Customer --> auth
+Customer --> join
+Customer --> display
+Customer --> leave
+Customer --> chatbot
+
+' System
+System --> change
+System --> comp_analytics
+System --> main_assign
+System --> teller_assign
+System --> chatbot_com
+
+' Teller
+Teller --> emp_auth
+Teller --> dis_cus
+Teller --> rec_tran
+Teller --> rec_canc
+Teller --> rem_user
+
+' Manager
+Manager --> emp_auth
+Manager --> analytics
+
+
+
+' Sub Linkage
+join .. change
+leave .. change
+main_assign .. change
+teller_assign .. change
+change .. dis_cus
+cus_lookup .. auth
+emp_lookup .. emp_auth
+
+@enduml
