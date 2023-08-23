@@ -10,9 +10,7 @@ pub fn list_transactions() -> Result<Vec<Transaction>, &'static str> {
         Ok(transactions) => {
             info!("Transactions: {:?}", transactions);
             Ok(transactions)
-        }
+        },
         Err(_) => Err("Unable to find transactions"),
     }
 }
-
-pub fn average_customer_count() {}

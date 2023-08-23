@@ -40,13 +40,3 @@ pub async fn yearly_report() -> impl Responder {
         Err(err) => HttpResponse::NotFound().body(err.to_string()),
     }
 }
-
-// #[get("/customerDetails")]
-// pub fn customerDetails() -> impl Responder {
-//     let report = get_analytics();
-
-//     match report {
-//         Ok(report) => {}
-//         Err(err) => {}
-//     }
-// }
