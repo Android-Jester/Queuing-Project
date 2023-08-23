@@ -1,26 +1,22 @@
-pub mod models;
-pub mod user_interface;
+pub mod actions;
+pub mod auth;
+pub mod client_event;
+pub mod deletable;
 
 pub mod prelude {
-    pub use super::models::*;
-    pub use super::user_interface::*;
+    pub use super::actions::*;
+    pub use super::auth::*;
+    pub use super::client_event::*;
+    pub use super::deletable::*;
     use crate::prelude::*;
-
-    pub fn user_config(cfg: &mut web::ServiceConfig) {
+    pub fn user_config(cfg: &mut ServiceConfig) {
         cfg.service(
-            web::scope("/user")
+            scope("/user")
                 .service(user_login)
                 .service(guest_login)
-                .service(join_queue)
-                .service(leave_queue),
+                .service(client_listings)
+                .service(main_queue_join)
+                .service(main_queue_leave),
         );
-    }
-
-    #[get("/")]
-    pub async fn list_users() -> impl Responder {
-        match list_users_db() {
-            Ok(users) => HttpResponse::Ok().json(users),
-            Err(err) => HttpResponse::BadRequest().body(err),
-        }
     }
 }
