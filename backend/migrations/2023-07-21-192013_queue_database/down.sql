@@ -4,3 +4,4 @@ DROP TABLE Servers;
 DROP TABLE Clients;
 DROP TABLE Guests_Clients;
 DROP TABLE MainQueue;
+DROP TABLE Cancelled;

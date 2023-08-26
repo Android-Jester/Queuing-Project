@@ -1,7 +1,5 @@
 use crate::prelude::*;
 
-struct TellerPos {}
-
 #[post("/dismiss/{teller_pos}")]
 pub async fn record_transaction(
     transaction: Json<Transaction>,
@@ -51,36 +49,45 @@ pub struct RemoveUserQuery {
     national_id: String,
 }
 
-#[post("/remove")]
+#[post("/remove/{teller_pos}")]
 pub async fn remove_user(
-    national_id: Json<RemoveUserQuery>,
     teller_pos: Path<i32>,
     queue_data: Data<Mutex<Queue>>,
     server_queue: Data<Mutex<SubQueues>>,
     broadcast: Data<ClientBroadcaster>,
     server_broadcast: Data<ServerBroadcaster>,
+    transaction: Json<CancelStruct>,
 ) -> impl Responder {
     let mut queue = queue_data.lock();
     let mut subqueue = server_queue.lock();
     let service_location = teller_pos.into_inner();
-    match queue
-        .user_remove(
-            national_id.national_id.clone(),
-            &mut subqueue,
-            broadcast.into_inner(),
-        )
-        .await
-    {
+    let cancelled_transaction = transaction.into_inner();
+    match add_cancelled(cancelled_transaction.clone()) {
         Ok(_) => {
-            info!("User Removed");
-            server_broadcast
-                .user_update(&subqueue, service_location as usize)
-                .await;
-            HttpResponse::Ok().body("User Removed")
+            match queue
+                .user_remove(
+                    cancelled_transaction.client_national_id.clone(),
+                    &mut subqueue,
+                    broadcast.into_inner(),
+                )
+                .await
+            {
+                Ok(_) => {
+                    info!("User Removed");
+                    server_broadcast
+                        .user_update(&subqueue, service_location as usize)
+                        .await;
+                    HttpResponse::Ok().body("User Removed")
+                }
+                Err(e) => {
+                    error!("ERROR: {}", e);
+                    HttpResponse::NotFound().body(e)
+                }
+            }
         }
-        Err(e) => {
-            error!("ERROR: {}", e);
-            HttpResponse::NotFound().body(e)
+        Err(err) => {
+            error!("ERROR: {}", err);
+            HttpResponse::NotFound().body(err.to_string())
         }
     }
 }

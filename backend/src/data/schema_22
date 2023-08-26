@@ -1,18 +1,6 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    Cancelled (id) {
-        id -> Integer,
-        detail -> Text,
-        #[max_length = 255]
-        server_id -> Varchar,
-        #[max_length = 15]
-        client_national_id -> Varchar,
-        created_date -> Timestamp,
-    }
-}
-
-diesel::table! {
     Clients (id) {
         id -> Integer,
         name -> Text,
@@ -77,12 +65,10 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(Cancelled -> Servers (server_id));
 diesel::joinable!(MainQueue -> Servers (assigned_server));
 diesel::joinable!(Transactions -> Servers (server_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    Cancelled,
     Clients,
     Guests_Clients,
     MainQueue,

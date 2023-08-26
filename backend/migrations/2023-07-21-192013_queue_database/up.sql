@@ -1,3 +1,12 @@
+CREATE TABLE Cancelled (
+   id INTEGER AUTO_INCREMENT PRIMARY KEY,
+   detail TEXT NOT NULL,
+   server_id VARCHAR(255) NOT NULL,
+   client_national_id VARCHAR(15) NOT NULL,
+   created_date TIMESTAMP NOT NULL,
+   -- Foreign Key pair
+   FOREIGN KEY (server_id) REFERENCES Servers(server_id)   
+);
 CREATE TABLE Clients (
    id INTEGER PRIMARY KEY AUTO_INCREMENT,
    name TEXT NOT NULL,

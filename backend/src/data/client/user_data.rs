@@ -78,41 +78,41 @@ impl ClientQueueData {
         Self { ..user }
     }
 
-    pub async fn timer_countdown(national_id: String, broadcaster: Arc<ClientBroadcaster>) {
-        tokio::spawn(async move {
-            let national_id = national_id.clone();
-            dbg!(national_id.clone());
-            let user = ClientQueueData::find_user(national_id.clone());
-            match user {
-                Ok(data_user) => {
-                    let mut time = db_teller_service_time(data_user.assigned_server)
-                        * data_user.sub_queue_position
-                        + ClientQueueData::first_user().unwrap().position;
-                    let mut interval = tokio::time::interval(Duration::from_secs(2));
-                    while time != 0 {
-                        interval.tick().await;
-                        time = time - 1;
-                        dbg!(national_id.clone());
-                        let data = ClientQueueData::show_countdown(
-                            national_id.clone(),
-                            broadcaster.clone(),
-                            time,
-                        )
-                        .await;
-                        match data {
-                            Ok(res) => {
-                                info!("DD")
-                            }
-                            Err(err) => break,
-                        }
-                    }
-                }
-                Err(_) => {
-                    error!("ERROR")
-                }
-            }
-        });
-    }
+    // pub async fn timer_countdown(national_id: String, broadcaster: Arc<ClientBroadcaster>) {
+    //     tokio::spawn(async move {
+    //         let national_id = national_id.clone();
+    //         dbg!(national_id.clone());
+    //         let user = ClientQueueData::find_user(national_id.clone());
+    //         match user {
+    //             Ok(data_user) => {
+    //                 let mut time = db_teller_service_time(data_user.assigned_server)
+    //                     * data_user.sub_queue_position
+    //                     + ClientQueueData::first_user().unwrap().position;
+    //                 let mut interval = tokio::time::interval(Duration::from_secs(2));
+    //                 while time != 0 {
+    //                     interval.tick().await;
+    //                     time = time - 1;
+    //                     dbg!(national_id.clone());
+    //                     let data = ClientQueueData::show_countdown(
+    //                         national_id.clone(),
+    //                         broadcaster.clone(),
+    //                         time,
+    //                     )
+    //                     .await;
+    //                     match data {
+    //                         Ok(res) => {
+    //                             info!("DD")
+    //                         }
+    //                         Err(err) => break,
+    //                     }
+    //                 }
+    //             }
+    //             Err(_) => {
+    //                 error!("ERROR")
+    //             }
+    //         }
+    //     });
+    // }
 
     pub fn replace_fill(&mut self, user: ClientQueueData) {
         *self = user;
