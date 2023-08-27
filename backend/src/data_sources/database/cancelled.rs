@@ -38,3 +38,8 @@ pub fn get_year_cancelled_report() -> Result<Vec<CancelStruct>, diesel::result::
     diesel::sql_query("SELECT * FROM Cancelled WHERE created_date > NOW() - INTERVAL 1 YEAR")
         .load(conn)
 }
+
+pub fn get_cancelled_report() -> Result<Vec<CancelStruct>, diesel::result::Error> {
+    let conn = &mut establish_connection();
+    diesel::sql_query("SELECT * FROM Cancelled").load(conn)
+}

@@ -1,3 +1,5 @@
+use std::io::Read;
+
 use crate::prelude::*;
 #[get("/daily")]
 pub async fn daily_report() -> impl Responder {
@@ -39,4 +41,25 @@ pub async fn yearly_report() -> impl Responder {
         Ok(transactions) => HttpResponse::Ok().json(transactions),
         Err(err) => HttpResponse::NotFound().body(err.to_string()),
     }
+}
+
+#[get("/analytics_data")]
+pub async fn analytics_display() -> impl Responder {
+    let analytics = crate::data::analytics::Analytics::new();
+    HttpResponse::Ok().json(analytics)
+}
+
+#[get("/get_report")]
+pub async fn get_report() -> impl Responder {
+    generate_pdf();
+    let mut file = std::fs::File::open("report.pdf").unwrap();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer);
+    HttpResponse::Ok()
+        .content_type("application/pdf")
+        .header(
+            "Content-Disposition",
+            format!("attachment; filename=report.pdf"),
+        )
+        .body(buffer)
 }

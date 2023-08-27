@@ -1,6 +1,7 @@
 use crate::prelude::*;
 
-struct Analytics {
+#[derive(Deserialize, Serialize)]
+pub struct Analytics {
     average_service_time: f32,
     average_waiting_time_in_system: f64,
     average_queue_length: f64,
