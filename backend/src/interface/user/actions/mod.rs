@@ -15,10 +15,13 @@ pub async fn main_queue_join(
     client_broadcast: Data<ClientBroadcaster>,
 ) -> Either<HttpResponse, actix_web_lab::sse::Sse<actix_web_lab::sse::ChannelStream>> {
     let user_input = user_input.into_inner();
-    let national_id = user_input.national_id.clone();
-    let user_name = db_find_user(national_id.clone()).unwrap().name;
+    let national_id = user_input.national_id;
+
+    // Queue Structs
     let main_queues = main_queue.into_inner();
     let sub_queues = sub_queues.into_inner();
+
+    // Broadcasters
     let server_broadcast = server_broadcast.into_inner();
     let client_broadcast = client_broadcast.into_inner();
     let mut sub_queue = sub_queues.lock();
@@ -32,16 +35,18 @@ pub async fn main_queue_join(
     // let prediction = 0;
     let user_input = ClientInputData {
         activity: user_input.activity.clone(),
-        national_id: user_input.national_id.clone(),
+        national_id: national_id.clone(),
     };
     info!("Pred: {:?}", prediction);
+    let queue_count = get_current_queue_count();
+    // if queue_count < CUSTOMER_COUNT as usize {
     if prediction < sub_queue.teller_count() {
         let teller_id = &sub_queue.tellers[prediction].teller.server_id;
         if let Ok(mut added_user) = main_queue.user_add(
             ClientQueueData::new(
                 user_input.clone(),
                 teller_id.clone(),
-                user_name,
+                db_find_user(national_id.clone()).unwrap().name,
                 prediction as i32,
             ),
             &mut sub_queue,
@@ -62,8 +67,13 @@ pub async fn main_queue_join(
         } else {
             Either::Left(HttpResponse::BadRequest().body("Teller Not available"))
         }
+        // } else {
+        // Either::Left(HttpResponse::BadRequest().body("Teller Not available"))
+        // }
+    } else if queue_count == 0 {
+        Either::Left(HttpResponse::BadRequest().body("Queue Not available"))
     } else {
-        Either::Left(HttpResponse::BadRequest().body("Teller Not available"))
+        Either::Left(HttpResponse::BadRequest().body("Queue is full"))
     }
 }
 
@@ -94,11 +104,11 @@ pub async fn main_queue_leave(
         )
         .await;
     match removed_user_teller {
-        Ok(teller_loc) => {
+        Ok(removed_client) => {
             server_broadcaster
-                .user_update(&sub_queue, teller_loc.server_location as usize)
+                .user_update(&sub_queue, removed_client.server_location as usize)
                 .await;
-            HttpResponse::Ok().body("Removed: USER".to_string())
+            HttpResponse::Ok().body(format!("Removed: {}", removed_client.national_id))
         }
         Err(err) => HttpResponse::Conflict().body(err),
     }

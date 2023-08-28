@@ -7,6 +7,7 @@ pub mod prelude {
     pub fn analytics_config(cfg: &mut ServiceConfig) {
         cfg.service(
             scope("/analytics")
+                .service(analytics_display)
                 .service(get_report)
                 .service(
                     scope("/transactions")

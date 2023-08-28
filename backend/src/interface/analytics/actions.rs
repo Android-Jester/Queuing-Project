@@ -43,7 +43,7 @@ pub async fn yearly_report() -> impl Responder {
     }
 }
 
-#[get("/analytics_data")]
+#[get("")]
 pub async fn analytics_display() -> impl Responder {
     let analytics = crate::data::analytics::Analytics::new();
     HttpResponse::Ok().json(analytics)
@@ -54,12 +54,16 @@ pub async fn get_report() -> impl Responder {
     generate_pdf();
     let mut file = std::fs::File::open("report.pdf").unwrap();
     let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer);
-    HttpResponse::Ok()
-        .content_type("application/pdf")
-        .header(
-            "Content-Disposition",
-            format!("attachment; filename=report.pdf"),
-        )
-        .body(buffer)
+    if let Ok(_) = file.read_to_end(&mut buffer) {
+        #[allow(deprecated)]
+        HttpResponse::Ok()
+            .content_type("application/pdf")
+            .header(
+                "Content-Disposition",
+                format!("attachment; filename=report.pdf"),
+            )
+            .body(buffer)
+    } else {
+        HttpResponse::NotAcceptable().body("Unable to convert buffer")
+    }
 }

@@ -11,7 +11,6 @@ pub mod prelude {
     pub use super::tellers::prelude::*;
     pub use super::transactions::prelude::*;
     pub use super::users::prelude::*;
-    use clap::Parser;
     pub use diesel::prelude::*;
 
     #[allow(clippy::expect_used)]

@@ -1,8 +1,5 @@
-use std::default;
-
-use clap::{Parser, Subcommand};
-use dotenvy::dotenv;
-use SQ_backend::prelude::*;
+use clap::Parser;
+use sq_backend::prelude::*;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

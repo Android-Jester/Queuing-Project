@@ -24,10 +24,8 @@ struct ServiceTimes {
 pub fn get_service_time() -> Result<f32, String> {
     let conn = &mut establish_connection();
     let db_res = conn.transaction(|connection| {
-        diesel::sql_query(
-            "SELECT duration FROM Transactions WHERE created_date > NOW() - INTERVAL 1 DAY",
-        )
-        .get_results::<ServiceTimes>(connection)
+        diesel::sql_query("SELECT duration FROM Transactions WHERE created_date")
+            .get_results::<ServiceTimes>(connection)
     });
 
     match db_res {
@@ -42,5 +40,22 @@ pub fn get_service_time() -> Result<f32, String> {
             Ok(res)
         }
         Err(_) => Err("Unable to find transactions".to_string()),
+    }
+}
+
+pub fn get_current_queue_count() -> usize {
+    let conn = &mut establish_connection();
+    let db_res = conn.transaction(|connection| {
+        Transactions::dsl::Transactions
+            .select(Transaction::as_select())
+            .get_results(connection)
+    });
+
+    match db_res {
+        Ok(transactions) => {
+            info!("Transactions: {:?}", transactions);
+            transactions.len()
+        }
+        Err(_) => 0,
     }
 }

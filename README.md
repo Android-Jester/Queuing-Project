@@ -19,8 +19,6 @@ This project was made to improve upon the situation of queuing in banks, it was 
 ```
 
 
-
-
 # Configuration
 
 # Features
@@ -86,4 +84,5 @@ You can contact Us through [mail](mailto:kaduah14@gmail.com) for any issue
 Features
 Contributing
 Acknowledgments 
-Troubleshooting -->
+Troubleshooting 
+-->

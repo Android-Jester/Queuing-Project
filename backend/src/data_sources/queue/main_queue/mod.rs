@@ -23,7 +23,7 @@ pub mod prelude {
             .expect("Failed to load font family");
         let mut doc = genpdf::Document::new(font_family);
         doc.set_title("Smart Queue Queue System");
-        let mut decorator = genpdf::SimplePageDecorator::new();
+        let decorator = genpdf::SimplePageDecorator::new();
         // decorator.set_margins(10);
         doc.set_page_decorator(decorator);
         let now: DateTime<chrono::Utc> = chrono::Utc::now();
@@ -77,22 +77,22 @@ pub mod prelude {
         let title = title.styled_string(format!("Transactions Page ({})", title_head), style);
         let title = title.padded(Margins::all(5));
         doc.push(title);
-        let mut table = elements::TableLayout::new(vec![1, 1, 1, 1, 1, 1]);
-        let mut row_table = table
+        let mut table = elements::TableLayout::new(vec![1, 1, 1, 1, 1]);
+        let row_table = table
             .row()
-            .element(elements::Paragraph::new("ID"))
+            // .element(elements::Paragraph::new("ID"))
             .element(elements::Paragraph::new("detail"))
             .element(elements::Paragraph::new("server_id"))
             .element(elements::Paragraph::new("client_national_id"))
             .element(elements::Paragraph::new("duration"))
             .element(elements::Paragraph::new("created_date"));
-        row_table.push();
+        row_table.push().unwrap();
         let mut count = 0;
         for transaction in transactions {
             count += 1;
             let table_row2 = table
                 .row()
-                .element(elements::Paragraph::new(count.to_string()))
+                // .element(elements::Paragraph::new(count.to_string()))
                 .element(elements::Paragraph::new(transaction.detail))
                 .element(elements::Paragraph::new(transaction.server_id))
                 .element(elements::Paragraph::new(transaction.client_national_id))
@@ -102,7 +102,7 @@ pub mod prelude {
                 ));
             table_row2.push().unwrap();
         }
-        doc.push(table);
+        doc.push(table.framed());
     }
 
     fn add_cancelled_table(title_head: &str, cancelled: Vec<CancelStruct>, doc: &mut Document) {
@@ -114,10 +114,10 @@ pub mod prelude {
         let title = title.styled_string(format!("Cancelled Transactions({})", title_head), style);
         let title = title.padded(Margins::all(5));
         doc.push(title);
-        let mut table = elements::TableLayout::new(vec![1, 1, 1, 1, 1, 1]);
-        let mut table_row = table
+        let mut table = elements::TableLayout::new(vec![1, 1, 1, 1, 1]);
+        let table_row = table
             .row()
-            .element(elements::Paragraph::new("ID"))
+            // .element(elements::Paragraph::new("ID"))
             .element(elements::Paragraph::new("detail"))
             .element(elements::Paragraph::new("server_id"))
             .element(elements::Paragraph::new("client_national_id"))
@@ -129,7 +129,7 @@ pub mod prelude {
             count += 1;
             let table_row2 = table
                 .row()
-                .element(elements::Paragraph::new(count.to_string()))
+                // .element(elements::Paragraph::new(count.to_string()))
                 .element(elements::Paragraph::new(transaction.detail))
                 .element(elements::Paragraph::new(transaction.server_id))
                 .element(elements::Paragraph::new(transaction.client_national_id))
@@ -138,6 +138,6 @@ pub mod prelude {
                 ));
             table_row2.push().unwrap();
         }
-        doc.push(table);
+        doc.push(table.framed());
     }
 }

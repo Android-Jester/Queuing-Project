@@ -28,7 +28,7 @@ impl SubQueues {
         }
     }
     pub fn teller_remove(&mut self, index: usize) -> Result<ServerQueue, &'static str> {
-        if index >= 0 && index <= self.teller_count() {
+        if index <= self.teller_count() {
             Ok(self.tellers.remove(index))
         } else {
             Err("Teller Not Available")
