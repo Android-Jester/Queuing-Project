@@ -1,6 +1,5 @@
 use backend::prelude::*;
-use openssl::ssl::SslMethod;
-use std::thread::Thread;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -12,7 +11,6 @@ async fn main() -> std::io::Result<()> {
     let broadcast_countdown = ClientBroadcaster::create();
     let queue_data_main: Data<Mutex<Queue>> = Data::new(Mutex::new(Queue::default()));
     let queue_data_sub: Data<Mutex<SubQueues>> = Data::new(Mutex::new(SubQueues::default()));
-
     HttpServer::new(move || {
         let cors = actix_cors::Cors::default()
             .supports_credentials()

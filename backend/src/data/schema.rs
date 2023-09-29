@@ -1,7 +1,9 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    Clients (id) {
+
+#[allow(non_snake_case)]
+   Clients (id) {
         id -> Integer,
         name -> Text,
         #[max_length = 255]
@@ -14,6 +16,7 @@ diesel::table! {
 }
 
 diesel::table! {
+#[allow(non_snake_case)]
     Guests_Clients (national_id) {
         #[max_length = 15]
         national_id -> Varchar,
@@ -24,6 +27,7 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     MainQueue (national_id) {
         #[max_length = 16]
         national_id -> Varchar,
@@ -41,6 +45,7 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Servers (server_id) {
         #[max_length = 255]
         server_id -> Varchar,
@@ -53,6 +58,7 @@ diesel::table! {
 }
 
 diesel::table! {
+    #[allow(non_snake_case)]
     Transactions (id) {
         id -> Integer,
         detail -> Text,

@@ -21,22 +21,6 @@ impl SubQueues {
         client.setup(position, sub_queue_position, timer);
     }
 
-    fn sub_queue_realign(&mut self, old_sub_queue_position: i32, server_loc: i32) {
-        let teller_info = &mut self.tellers[server_loc as usize];
-        let teller_queue = &mut teller_info.users;
-        let startup_time = teller_queue[1].clone().time_duration;
-        //TODO: Change the sub_queue_position of all users after the removed user
-        for (position, user) in teller_queue.iter_mut().enumerate() {
-            // let mut user = user;
-            if user.sub_queue_position > old_sub_queue_position {
-                let remaining_time = startup_time;
-                let timer =
-                    (teller_info.teller.service_time * (position as i32 + 1)) + remaining_time;
-                user.time_duration = timer;
-                user.sub_queue_position = position as i32;
-            }
-        }
-    }
     pub fn customer_add(
         &mut self,
         mut user: ClientQueueData,
@@ -96,12 +80,7 @@ impl SubQueues {
                 ClientQueueData::remove_user(national_id);
                 queue.queue = ClientQueueData::list_users();
                 dbg!(queue.queue.clone());
-                self.drain_queue(
-                    removed_user.server_location,
-                    removed_user.position,
-                    removed_user.sub_queue_position,
-                    &mut queue,
-                );
+                self.drain_queue(removed_user.position, &mut queue);
                 let mut prev_pos = removed_user.sub_queue_position;
                 for queued_user in queue.queue.iter_mut() {
                     if queued_user.position > removed_user.position {
@@ -143,9 +122,9 @@ impl SubQueues {
 
     fn drain_queue(
         &mut self,
-        server_loc: i32,
+        // server_loc: i32,
         user_position: i32,
-        user_sub_pos: i32,
+        // user_sub_pos: i32,
         queue: &mut Queue,
     ) {
         for user in queue.queue.iter_mut() {

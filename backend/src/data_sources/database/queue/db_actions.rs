@@ -4,8 +4,8 @@ use diesel::result::Error;
 use log::error;
 
 use super::super::prelude::establish_connection;
-use crate::data::schema::{self, MainQueue, MainQueue::dsl::MainQueue as main_queue};
-use crate::prelude::{ClientBroadcaster, ClientQueueData, SubQueues};
+use crate::data::schema::{MainQueue, MainQueue::dsl::MainQueue as main_queue};
+use crate::prelude::{ClientBroadcaster, ClientQueueData};
 
 impl crate::prelude::ClientQueueData {
     pub fn first_user() -> Result<ClientQueueData, String> {

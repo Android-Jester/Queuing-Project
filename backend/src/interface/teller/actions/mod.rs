@@ -1,7 +1,5 @@
 use crate::prelude::*;
 
-struct TellerPos {}
-
 #[post("/dismiss/{teller_pos}")]
 pub async fn record_transaction(
     transaction: Json<Transaction>,

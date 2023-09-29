@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use actix_web_lab::sse::{self, ChannelStream, Sse};
 use tokio::time::interval;
 

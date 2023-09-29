@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use chrono::{NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, Utc};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClientLoginData {
@@ -53,7 +53,8 @@ impl ClientQueueData {
         let conn = &mut establish_connection();
         MainQueue::dsl::MainQueue
             .order(MainQueue::position.asc())
-            .execute(conn);
+            .execute(conn)
+            .unwrap();
     }
 
     pub fn new(
@@ -100,10 +101,10 @@ impl ClientQueueData {
                         )
                         .await;
                         match data {
-                            Ok(res) => {
+                            Ok(_) => {
                                 info!("DD")
                             }
-                            Err(err) => break,
+                            Err(_) => break,
                         }
                     }
                 }
