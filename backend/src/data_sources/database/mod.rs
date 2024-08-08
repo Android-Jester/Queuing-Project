@@ -5,7 +5,7 @@ pub mod transactions;
 pub mod users;
 pub mod prelude {
     pub use super::guests::prelude::*;
-    pub use super::queue::prelude::*;
+    
     pub use super::tellers::prelude::*;
     pub use super::transactions::prelude::*;
     pub use super::users::prelude::*;
