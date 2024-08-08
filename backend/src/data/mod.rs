@@ -9,5 +9,5 @@ pub mod prelude {
     pub use super::schema::*;
     pub use super::servers::prelude::*;
     pub use super::transaction::prelude::*;
-    pub use diesel::mysql::Mysql;
+    pub use diesel::pg::Pg;
 }

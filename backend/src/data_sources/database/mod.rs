@@ -12,9 +12,9 @@ pub mod prelude {
     pub use diesel::prelude::*;
 
     #[allow(clippy::expect_used)]
-    pub fn establish_connection() -> MysqlConnection {
+    pub fn establish_connection() -> PgConnection {
         dotenvy::dotenv().ok();
         let database_url = std::env::var("DATABASE_URL").expect("Database URL not Provided");
-        MysqlConnection::establish(&database_url).expect("Unable to connect to DB")
+        PgConnection::establish(&database_url).expect("Unable to connect to DB")
     }
 }

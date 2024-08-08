@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use diesel::mysql::Mysql;
+use diesel::pg::Pg;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -10,7 +10,7 @@ pub struct ServerLogin {
 
 #[derive(Selectable, Queryable, Deserialize, Serialize, Clone, PartialEq, Debug)]
 #[diesel(table_name = Servers)]
-#[diesel(check_for_backend(Mysql))]
+#[diesel(check_for_backend(Pg))]
 pub struct ServerQuery {
     pub server_id: String,
     pub station: i32,

@@ -12,8 +12,8 @@ fn probability_of_zero(lambda: f64, c: usize, mu: f64) -> f64 {
 }
 
 // Helper function to calculate ρ^n
-fn rho_pow(ρ: f64, n: usize) -> f64 {
-    ρ.powi(n as i32)
+fn rho_pow(rho: f64, n: usize) -> f64 {
+    rho.powi(n as i32)
 }
 
 // Helper function to calculate factorial of a number

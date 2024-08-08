@@ -5,7 +5,7 @@ use chrono::NaiveDateTime;
     Selectable, Queryable, Insertable, Deserialize, QueryableByName, Serialize, Clone, Debug,
 )]
 #[diesel(table_name = Transactions)]
-#[diesel(check_for_backend(Mysql))]
+#[diesel(check_for_backend(Pg))]
 pub struct Transaction {
     pub detail: String,
     pub server_id: String,

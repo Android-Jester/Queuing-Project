@@ -34,7 +34,8 @@ impl ClientDataQuery {
     Queryable, Selectable, Insertable, Default, Deserialize, Serialize, Clone, Debug, PartialEq,
 )]
 #[diesel(table_name = MainQueue)]
-#[diesel(check_for_backend(diesel::mysql::Mysql))]
+// #[diesel(check_for_backend(diesel::mysql::Mysql))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ClientQueueData {
     pub name: String,
     pub national_id: String,
